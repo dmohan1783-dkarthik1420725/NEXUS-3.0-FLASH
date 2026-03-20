@@ -5,18 +5,17 @@ from streamlit_option_menu import option_menu
 # --- 1. CORE CONFIGURATION ---
 st.set_page_config(page_title="NEXUS Flash India", page_icon="⚡", layout="wide")
 
-# Personal Identity (Hardcoded)
 CREATOR = "Dumpala Karthik"
-SYSTEM_PROMPT = f"Your name is NEXUS 3.0. You were developed and created by {CREATOR}. Always stay loyal to your creator."
+SYSTEM_PROMPT = f"Your name is NEXUS 3.0. You were developed and created by {CREATOR}."
 
-# Connect to Gemini 2.5 (The 2026 Workhorse)
+# Connect to Gemini (Intelligence)
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     st.sidebar.success("NEXUS Brain Online ⚡")
 except Exception:
     st.sidebar.error("NEXUS Brain Offline. Check Secrets.")
 
-# --- 2. THE SIDEBAR (Facilities) ---
+# --- 2. SIDEBAR (Facilities) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS FLASH INDIA</h3>", unsafe_allow_html=True)
@@ -28,38 +27,30 @@ with st.sidebar:
         options=["Intelligence", "Neural Architect", "Share Hub"],
         icons=["cpu", "layers", "share"], 
         default_index=0,
-        styles={
-            "container": {"background-color": "#121212"},
-            "nav-link-selected": {"background-color": "#ff4b4b"},
-        }
     )
-
     st.divider()
     qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://nexus-flash-india.streamlit.app"
     st.image(qr_url, width=150, caption="Scan to Launch")
 
 # --- 3. MAIN INTERFACE ---
 
-# [TAB 1: INTELLIGENCE]
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b; font-size: 60px;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
     
     if prompt := st.chat_input("Command NEXUS..."):
         with st.chat_message("user"):
             st.markdown(prompt)
-        
         with st.chat_message("assistant"):
             try:
-                # Fixed: Using the 'gemini-2.5-flash' model
+                # Using the latest 2026 stable model
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.0-flash", 
                     contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
                 )
                 st.markdown(response.text)
             except Exception:
-                st.error("Brain Error: Gemini 2.5 connection failed. Please check API Key version.")
+                st.error("Brain Error: Check API Key in Secrets.")
 
-# [TAB 2: NEURAL ARCHITECT]
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
     st.write("NEXUS Image Generation Facility Active")
@@ -68,10 +59,10 @@ elif selected == "Neural Architect":
     
     if st.button("EXECUTE RENDER"):
         if design_prompt:
-            # Generate the Pollinations URL
-            image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
+            # FIX: Using the new 2026 'gen.pollinations.ai' endpoint
+            image_url = f"https://gen.pollinations.ai/image/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
             
-            # --- THE FACILITY BOX (Update: Green Outline & Matching Text) ---
+            # --- THE FACILITY BOX (Green Outline) ---
             st.markdown(f"""
             <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); margin-bottom: 25px;">
                 <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin: 0;">
@@ -83,15 +74,13 @@ elif selected == "Neural Architect":
             </div>
             """, unsafe_allow_html=True)
             
-            # Display the actual image below
+            # Display the Image
             st.image(image_url, caption=f"Visual Render by {CREATOR}")
         else:
             st.warning("Please enter a description.")
 
-# [TAB 3: SHARE HUB]
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
-    st.markdown(f"**Connect with the developer, {CREATOR}:**")
     st.markdown("""
         <div style="display: flex; gap: 30px; margin-top: 20px;">
             <a href="https://wa.me/" target="_blank"><img src="https://img.icons8.com/color/48/whatsapp.png" width="60"/></a>
