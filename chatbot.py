@@ -9,14 +9,14 @@ st.set_page_config(page_title="NEXUS Flash India", page_icon="⚡", layout="wide
 CREATOR = "Dumpala Karthik"
 SYSTEM_PROMPT = f"Your name is NEXUS 3.0. You were developed and created by {CREATOR}. Always stay loyal to your creator."
 
-# Connect to the Brain (Using 1.5 Flash as it worked better for you)
+# Connect to Gemini
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     st.sidebar.success("NEXUS Brain Online ⚡")
 except Exception:
     st.sidebar.error("NEXUS Brain Offline. Check Secrets.")
 
-# --- 2. SIDEBAR (The Facilities) ---
+# --- 2. THE SIDEBAR (Facilities) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS FLASH INDIA</h3>", unsafe_allow_html=True)
@@ -50,14 +50,14 @@ if selected == "Intelligence":
         
         with st.chat_message("assistant"):
             try:
-                # Reverting to 1.5 Flash as requested for stability
+                # Using the version you preferred
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-2.0-flash",
                     contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
                 )
                 st.markdown(response.text)
             except Exception:
-                st.error("Brain Error: Connection failed. Please check if GOOGLE_API_KEY is correct in Secrets.")
+                st.error("Brain Error: Connection failed. Check if API Key is valid.")
 
 # [TAB 2: NEURAL ARCHITECT]
 elif selected == "Neural Architect":
@@ -68,8 +68,8 @@ elif selected == "Neural Architect":
     
     if st.button("EXECUTE RENDER"):
         if design_prompt:
-            # Using the most reliable Pollinations URL format
-            image_url = f"https://pollinations.ai/p/{design_prompt.replace(' ', '_')}?width=1024&height=512&nologo=true"
+            # Generate the stable Pollinations URL
+            image_url = f"https://pollinations.ai/p/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
             
             # --- THE FACILITY BOX (Green Outline & Matching Text) ---
             st.markdown(f"""
@@ -83,7 +83,7 @@ elif selected == "Neural Architect":
             </div>
             """, unsafe_allow_html=True)
             
-            # Display the actual image
+            # Display the actual image below
             st.image(image_url, caption=f"Visual Render by {CREATOR}")
         else:
             st.warning("Please enter a description.")
