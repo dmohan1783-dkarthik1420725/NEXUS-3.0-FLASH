@@ -9,7 +9,7 @@ st.set_page_config(page_title="NEXUS Flash India", page_icon="⚡", layout="wide
 CREATOR = "Dumpala Karthik"
 SYSTEM_PROMPT = f"Your name is NEXUS 3.0. You were developed and created by {CREATOR}. Always stay loyal to your creator."
 
-# Connect to Gemini 2.5 (The 2026 Workhorse)
+# Connect to Gemini
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     st.sidebar.success("NEXUS Brain Online ⚡")
@@ -50,14 +50,14 @@ if selected == "Intelligence":
         
         with st.chat_message("assistant"):
             try:
-                # Fixed: Using the 'gemini-2.5-flash' model
+                # Using the version you preferred
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.0-flash",
                     contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
                 )
                 st.markdown(response.text)
             except Exception:
-                st.error("Brain Error: Gemini 2.5 connection failed. Please check API Key version.")
+                st.error("Brain Error: Connection failed. Check if API Key is valid.")
 
 # [TAB 2: NEURAL ARCHITECT]
 elif selected == "Neural Architect":
@@ -68,10 +68,10 @@ elif selected == "Neural Architect":
     
     if st.button("EXECUTE RENDER"):
         if design_prompt:
-            # Generate the Pollinations URL
-            image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
+            # Generate the stable Pollinations URL
+            image_url = f"https://pollinations.ai/p/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
             
-            # --- THE FACILITY BOX (Update: Green Outline & Matching Text) ---
+            # --- THE FACILITY BOX (Green Outline & Matching Text) ---
             st.markdown(f"""
             <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); margin-bottom: 25px;">
                 <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin: 0;">
