@@ -1,14 +1,11 @@
 import streamlit as st
 from google import genai
 import requests
-import time
 from streamlit_option_menu import option_menu
 
-# --- 1. CORE CONFIGURATION ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NEXUS 3.0 ULTRA", page_icon="⚡", layout="wide")
 CREATOR = "Dumpala Karthik"
-# Streamlined prompt to save tokens and avoid quota triggers
-SYSTEM_PROMPT = f"Name: NEXUS 3.0 ULTRA. Creator: {CREATOR}."
 
 # --- SMART KEY LOGIC ---
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
@@ -17,9 +14,9 @@ pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_K
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     brain_status = "Online ⚡"
-except Exception:
+except:
     client = None
-    brain_status = "Offline (Check Secrets)"
+    brain_status = "Offline"
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
@@ -28,82 +25,63 @@ with st.sidebar:
     st.success(f"NEXUS Brain: {brain_status}")
     
     if not pollinations_key:
-        app_url = "https://nexus-flash-india.streamlit.app"
-        auth_url = f"https://enter.pollinations.ai/authorize?redirect_url={app_url}"
-        st.markdown(f"""
-            <a href="{auth_url}" target="_blank">
-                <button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">
-                    🔌 CONNECT POLLINATIONS
-                </button>
-            </a>""", unsafe_allow_html=True)
+        auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
+        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CONNECT POLLINATIONS</button></a>', unsafe_allow_html=True)
     else:
         st.info("Architect Linked 🌸")
 
     st.divider()
-    selected = option_menu(
-        menu_title=None, 
-        options=["Intelligence", "Neural Architect", "Share Hub"], 
-        icons=["cpu", "layers", "share"], 
-        default_index=0,
-        styles={"nav-link-selected": {"background-color": "#ff4b4b"}}
-    )
+    selected = option_menu(None, ["Intelligence", "Neural Architect", "Share Hub"], 
+                          icons=["cpu", "layers", "share"], default_index=0)
 
 # --- 3. MAIN INTERFACE ---
 
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
     
-    if client:
-        if prompt := st.chat_input("Command NEXUS..."):
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            with st.chat_message("assistant"):
-                success = False
-                # Try 3 times with increasing wait times (Backoff)
-                for attempt in range(3):
-                    try:
-                        # Using 1.5-flash-lite: The 2026 workhorse for free apps
-                        response = client.models.generate_content(
-                            model="gemini-1.5-flash-lite", 
-                            contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-                        )
-                        st.markdown(response.text)
-                        success = True
-                        break
-                    except Exception:
-                        wait_time = (attempt + 1) * 4 # Wait 4s, then 8s
-                        if attempt < 2:
-                            st.warning(f"Brain traffic detected. Re-routing in {wait_time}s...")
-                            time.sleep(wait_time)
-                        else:
-                            st.error("Google's Free Tier is 100% full. Try again in 60 seconds.")
-    else:
-        st.warning("⚠️ Add your 'GOOGLE_API_KEY' to Secrets to chat.")
+    if prompt := st.chat_input("Command NEXUS..."):
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant"):
+            # STRATEGY: Try Gemini, if fails once, go to Pollinations immediately
+            try:
+                # Using the lightest model for speed
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash-8b", 
+                    contents=f"You are NEXUS 3.0 ULTRA by {CREATOR}. Short answer: {prompt}"
+                )
+                st.markdown(response.text)
+            except:
+                # FAILOVER BRAIN (Instant Backup)
+                st.caption("🚀 Google Brain busy. Switching to NEXUS Backup...")
+                try:
+                    # Pollinations text API doesn't have the same strict limits
+                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system=You%20are%20NEXUS%203.0%20ULTRA%20created%20by%20{CREATOR}"
+                    p_res = requests.get(p_url, timeout=10)
+                    st.markdown(p_res.text)
+                except:
+                    st.error("System Overloaded. Please try again in a few seconds.")
 
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
     if not pollinations_key:
         st.error("Please click 'CONNECT POLLINATIONS' in the sidebar!")
     else:
-        user_idea = st.text_input("Describe your vision:", placeholder="e.g. A futuristic city")
+        user_idea = st.text_input("Vision:")
         if st.button("EXECUTE RENDER"):
             if user_idea:
                 with st.spinner("Visualizing..."):
-                    try:
-                        clean_idea = user_idea.replace(" ", "%20")
-                        image_url = f"https://gen.pollinations.ai/image/{clean_idea}?width=1024&height=1024&nologo=true&model=flux&enhance=true&key={pollinations_key}"
-                        st.image(image_url, caption=f"Neural Render for {CREATOR}", use_column_width=True)
-                        st.balloons()
-                    except Exception:
-                        st.error("Neural Connection Lost. Please try again.")
+                    img_url = f"https://gen.pollinations.ai/image/{user_idea.replace(' ', '%20')}?width=1024&height=1024&nologo=true&model=flux&key={pollinations_key}"
+                    st.image(img_url, caption=f"Render by {CREATOR}", use_column_width=True)
+                    st.balloons()
+            else:
+                st.warning("Please enter a description.")
 
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
     st.markdown(f"**NEXUS 3.0 ULTRA developed by {CREATOR}**")
     st.markdown("""
         <div style="display: flex; gap: 20px; margin-top: 10px;">
-            <a href="https://wa.me/" target="_blank" style="text-decoration:none; color:#25D366; font-weight:bold;">WhatsApp</a>
-            <span style="color:#888;">|</span>
-            <a href="https://instagram.com/" target="_blank" style="text-decoration:none; color:#E1306C; font-weight:bold;">Instagram</a>
+            <a href="https://wa.me/" target="_blank">WhatsApp</a> | <a href="https://instagram.com/" target="_blank">Instagram</a>
         </div>
     """, unsafe_allow_html=True)
