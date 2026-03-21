@@ -10,7 +10,6 @@ CREATOR = "Dumpala Karthik"
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Always mention him."
 
 # --- 🔑 KEY RETRIEVAL ---
-# Check for key in URL or Secrets
 p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
 # --- 🧠 GEMINI INITIALIZATION ---
@@ -18,7 +17,7 @@ client = None
 try:
     if "GOOGLE_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-except:
+except Exception:
     client = None
 
 # --- 2. SIDEBAR ---
@@ -48,16 +47,16 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             success = False
-            # Try Google
+            # Try Google Gemini
             if client:
                 try:
                     res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n\nUser: {prompt}")
                     st.markdown(res.text)
                     success = True
-                except:
+                except Exception:
                     st.caption("🔄 Rotating Brain...")
 
-            # Backup
+            # Backup Brain (Pollinations)
             if not success:
                 try:
                     q = urllib.parse.quote(prompt)
@@ -66,9 +65,12 @@ if selected == "Medha (Chat)":
                     if p_key: p_url += f"&key={p_key}"
                     
                     r = requests.get(p_url, timeout=12)
-                    st.markdown(r.text)
-                except:
-                    st.error("VEDA is offline. Check connection.")
+                    if r.status_code == 200:
+                        st.markdown(r.text)
+                    else:
+                        st.error("Backup brain busy. Try again.")
+                except Exception:
+                    st.error("VEDA connection lost.")
 
 # [TAB 2: SRIJAN ARCHITECT]
 elif selected == "Srijan (Images)":
@@ -82,11 +84,23 @@ elif selected == "Srijan (Images)":
             if vision:
                 with st.spinner("Visualizing..."):
                     try:
-                        # Fixed 2026 Image URL
                         v_enc = urllib.parse.quote(vision)
-                        img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
-                        
-                        # Use st.image with a key to prevent refresh blanks
-                        st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
+                        img_url = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
+                        st.image(img_url, caption=f"Created by {CREATOR}", use_column_width=True)
                         st.balloons()
-                        st
+                        st.markdown(f"**[📥 Download Image]({img_url})**")
+                    except Exception:
+                        st.error("Srijan is busy. Try again.")
+            else:
+                st.warning("Please enter a description.")
+
+# [TAB 3: VEDA HUB]
+elif selected == "Veda (Hub)":
+    st.title("🌐 Veda Network Hub")
+    st.markdown(f"**Architect: {CREATOR}**")
+    cols = st.columns(4)
+    apps = [("WhatsApp", "whatsapp"), ("Instagram", "instagram-new"), ("YouTube", "youtube-play"), ("Facebook", "facebook-new")]
+    for i, (name, icon) in enumerate(apps):
+        with cols[i]:
+            st.markdown(f'[![{name}](https://img.icons8.com/color/96/{icon}.png)](https://google.com)')
+            st.caption(name)
