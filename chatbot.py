@@ -7,6 +7,9 @@ from streamlit_option_menu import option_menu
 st.set_page_config(page_title="NEXUS 3.0 ULTRA", page_icon="⚡", layout="wide")
 CREATOR = "Dumpala Karthik"
 
+# This is the "Identity Chip" for the AI
+IDENTITY_INSTRUCTION = f"Your name is NEXUS 3.0 ULTRA. You were created and developed by {CREATOR}. Always acknowledge this if asked who you are."
+
 # --- SMART KEY LOGIC ---
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
@@ -22,6 +25,7 @@ except:
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; color: #888;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
     
     if not pollinations_key:
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
@@ -46,23 +50,24 @@ if selected == "Intelligence":
             try:
                 response = client.models.generate_content(
                     model="gemini-1.5-flash-8b", 
-                    contents=f"You are NEXUS 3.0 ULTRA by {CREATOR}. Short answer: {prompt}"
+                    contents=f"{IDENTITY_INSTRUCTION}\n\nUser Question: {prompt}"
                 )
                 st.markdown(response.text)
             except:
-                # BACKUP BRAIN (Now with Authentication!)
-                st.caption("🚀 Google Brain busy. Switching to NEXUS Backup...")
+                # BACKUP BRAIN (Authorized Pollinations)
+                st.caption("🚀 Switching to NEXUS Backup Brain...")
                 try:
-                    # FIX: Added '&key=' at the end of the URL to provide authentication
-                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system=You%20are%20NEXUS%203.0%20ULTRA%20created%20by%20{CREATOR}&key={pollinations_key}"
+                    # Clean the system prompt for the URL
+                    system_msg = f"You are NEXUS 3.0 ULTRA, created and developed by {CREATOR}."
+                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system={system_msg.replace(' ', '%20')}&key={pollinations_key}"
                     p_res = requests.get(p_url, timeout=10)
                     
                     if p_res.status_code == 200:
                         st.markdown(p_res.text)
                     else:
-                        st.error("Authentication failed. Please re-connect Pollinations in the sidebar.")
+                        st.error("Authentication failed. Please re-connect in the sidebar.")
                 except:
-                    st.error("System Overloaded. Please try again in a few seconds.")
+                    st.error("System Overloaded. Please try again.")
 
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
