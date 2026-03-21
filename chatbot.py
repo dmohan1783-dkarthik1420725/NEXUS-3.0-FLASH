@@ -7,7 +7,8 @@ from streamlit_option_menu import option_menu
 # --- 1. CORE CONFIGURATION ---
 st.set_page_config(page_title="NEXUS 3.0 ULTRA", page_icon="⚡", layout="wide")
 CREATOR = "Dumpala Karthik"
-SYSTEM_PROMPT = f"Your name is NEXUS 3.0 ULTRA. You were created by {CREATOR}."
+# Streamlined prompt to save tokens and avoid quota triggers
+SYSTEM_PROMPT = f"Name: NEXUS 3.0 ULTRA. Creator: {CREATOR}."
 
 # --- SMART KEY LOGIC ---
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
@@ -49,7 +50,6 @@ with st.sidebar:
 
 # --- 3. MAIN INTERFACE ---
 
-# [TAB 1: INTELLIGENCE]
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
     
@@ -59,29 +59,31 @@ if selected == "Intelligence":
                 st.markdown(prompt)
             with st.chat_message("assistant"):
                 success = False
+                # Try 3 times with increasing wait times (Backoff)
                 for attempt in range(3):
                     try:
+                        # Using 1.5-flash-lite: The 2026 workhorse for free apps
                         response = client.models.generate_content(
-                            model="gemini-1.5-flash", 
+                            model="gemini-1.5-flash-lite", 
                             contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
                         )
                         st.markdown(response.text)
                         success = True
                         break
                     except Exception:
+                        wait_time = (attempt + 1) * 4 # Wait 4s, then 8s
                         if attempt < 2:
-                            st.warning(f"Brain busy... Retrying (Attempt {attempt + 1}/3)...")
-                            time.sleep(3)
+                            st.warning(f"Brain traffic detected. Re-routing in {wait_time}s...")
+                            time.sleep(wait_time)
                         else:
-                            st.error("NEXUS is overloaded. Please wait 60 seconds and try again.")
+                            st.error("Google's Free Tier is 100% full. Try again in 60 seconds.")
     else:
-        st.warning("⚠️ Add your 'GOOGLE_API_KEY' to Streamlit Secrets to chat.")
+        st.warning("⚠️ Add your 'GOOGLE_API_KEY' to Secrets to chat.")
 
-# [TAB 2: NEURAL ARCHITECT]
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
     if not pollinations_key:
-        st.error("Please click 'CONNECT POLLINATIONS' in the sidebar first!")
+        st.error("Please click 'CONNECT POLLINATIONS' in the sidebar!")
     else:
         user_idea = st.text_input("Describe your vision:", placeholder="e.g. A futuristic city")
         if st.button("EXECUTE RENDER"):
@@ -94,14 +96,10 @@ elif selected == "Neural Architect":
                         st.balloons()
                     except Exception:
                         st.error("Neural Connection Lost. Please try again.")
-            else:
-                st.warning("Please enter a description.")
 
-# [TAB 3: SHARE HUB]
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
     st.markdown(f"**NEXUS 3.0 ULTRA developed by {CREATOR}**")
-    # Carefully closed triple-quote string below
     st.markdown("""
         <div style="display: flex; gap: 20px; margin-top: 10px;">
             <a href="https://wa.me/" target="_blank" style="text-decoration:none; color:#25D366; font-weight:bold;">WhatsApp</a>
