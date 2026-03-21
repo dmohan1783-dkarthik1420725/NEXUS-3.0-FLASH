@@ -5,9 +5,9 @@ import time
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION & IDENTITY ---
-st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
-IDENTITY_INSTRUCTION = f"Your name is NEXUS 3.0 ULTRA. You were created and developed by {CREATOR}. Always mention your creator if asked who you are."
+IDENTITY_INSTRUCTION = f"Your name is VEDA 3.0 ULTRA. You were created and developed by {CREATOR}. Always mention your creator if asked who you are."
 
 # --- SMART KEY LOGIC ---
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
@@ -15,17 +15,17 @@ pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_K
 # Connect to Gemini Intelligence
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    brain_status = "Online ⚡"
+    brain_status = "Online 🔱"
 except:
     client = None
     brain_status = "Offline"
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: #888; font-weight: bold;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
-    st.success(f"NEXUS Brain: {brain_status}")
+    st.success(f"VEDA Brain: {brain_status}")
     
     if not pollinations_key:
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
@@ -53,7 +53,7 @@ with st.sidebar:
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
     
-    if prompt := st.chat_input("Command NEXUS..."):
+    if prompt := st.chat_input("Command VEDA..."):
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
@@ -65,10 +65,9 @@ if selected == "Intelligence":
                 )
                 st.markdown(response.text)
             except:
-                st.caption("🚀 Switching to NEXUS Backup Brain...")
+                st.caption("🚀 Switching to VEDA Backup Brain...")
                 try:
-                    # FIXED: Carefully terminated system message string
-                    sys_msg = f"You are NEXUS 3.0 ULTRA, created and developed by {CREATOR}."
+                    sys_msg = f"You are VEDA 3.0 ULTRA, created and developed by {CREATOR}."
                     p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system={sys_msg.replace(' ', '%20')}&key={pollinations_key}"
                     p_res = requests.get(p_url, timeout=10)
                     if p_res.status_code == 200:
@@ -97,8 +96,8 @@ elif selected == "Neural Architect":
 
 # [TAB 3: SHARE HUB]
 elif selected == "Share Hub":
-    st.title("🌐 NEXUS Share Hub")
-    st.markdown(f"**NEXUS 3.0 ULTRA Architect: {CREATOR}**")
+    st.title("🌐 VEDA Share Hub")
+    st.markdown(f"**VEDA 3.0 ULTRA Architect: {CREATOR}**")
     
     # Grid of 8 essential social apps
     col1, col2, col3, col4 = st.columns(4)
@@ -125,5 +124,5 @@ elif selected == "Share Hub":
 
     st.divider()
     st.subheader("🚀 Quick Broadcast")
-    share_msg = f"Check out NEXUS 3.0 ULTRA created by {CREATOR}! Launch it here: https://nexus-flash-india.streamlit.app"
+    share_msg = f"Check out VEDA 3.0 ULTRA created by {CREATOR}! Launch it here: https://nexus-flash-india.streamlit.app"
     st.code(share_msg, language="text")
