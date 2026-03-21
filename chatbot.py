@@ -23,11 +23,10 @@ except Exception:
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
     st.success(f"NEXUS Brain: {brain_status}")
     
     if not pollinations_key:
-        # Redirect URL for Pollinations Auth
         app_url = "https://nexus-flash-india.streamlit.app"
         auth_url = f"https://enter.pollinations.ai/authorize?redirect_url={app_url}"
         st.markdown(f"""
@@ -59,11 +58,10 @@ if selected == "Intelligence":
             with st.chat_message("user"):
                 st.markdown(prompt)
             with st.chat_message("assistant"):
-                # AUTO-RETRY LOGIC: Try 3 times if Google is busy
                 success = False
                 for attempt in range(3):
                     try:
-                        # Using 1.5-flash for maximum free-tier stability
+                        # Fixed the string termination and retry logic
                         response = client.models.generate_content(
                             model="gemini-1.5-flash", 
                             contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
@@ -73,4 +71,36 @@ if selected == "Intelligence":
                         break
                     except Exception:
                         if attempt < 2:
-                            st.warning(f"Brain busy... Retrying (Attempt {attempt + 1}/
+                            st.warning(f"Brain busy... Retrying (Attempt {attempt + 1}/3)...")
+                            time.sleep(3)
+                        else:
+                            st.error("NEXUS is overloaded. Please wait 60 seconds and try again.")
+    else:
+        st.warning("⚠️ Add your 'GOOGLE_API_KEY' to Streamlit Secrets to chat.")
+
+# [TAB 2: NEURAL ARCHITECT]
+elif selected == "Neural Architect":
+    st.title("🏗️ Neural Architect")
+    if not pollinations_key:
+        st.error("Please click 'CONNECT POLLINATIONS' in the sidebar first!")
+    else:
+        user_idea = st.text_input("Describe your vision:", placeholder="e.g. A futuristic city")
+        if st.button("EXECUTE RENDER"):
+            if user_idea:
+                with st.spinner("Visualizing..."):
+                    try:
+                        clean_idea = user_idea.replace(" ", "%20")
+                        image_url = f"https://gen.pollinations.ai/image/{clean_idea}?width=1024&height=1024&nologo=true&model=flux&enhance=true&key={pollinations_key}"
+                        st.image(image_url, caption=f"Neural Render for {CREATOR}", use_column_width=True)
+                        st.balloons()
+                    except Exception:
+                        st.error("Neural Connection Lost. Please try again.")
+            else:
+                st.warning("Please enter a description.")
+
+# [TAB 3: SHARE HUB]
+elif selected == "Share Hub":
+    st.title("🌐 Share Hub")
+    st.markdown(f"**NEXUS 3.0 ULTRA developed by {CREATOR}**")
+    st.markdown("""
+        <div style="display: flex; gap: 20px; margin-top: 1
