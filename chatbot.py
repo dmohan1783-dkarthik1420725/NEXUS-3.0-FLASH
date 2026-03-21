@@ -1,97 +1,66 @@
 import streamlit as st
 from google import genai
 import requests
+import urllib.parse # CRITICAL: This must be at the top!
 from streamlit_option_menu import option_menu
-import urllib.parse
 
-# --- 1. CONFIGURATION & IDENTITY ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
-IDENTITY_INSTRUCTION = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}."
 
 # --- 🔑 THE KEY GATEKEEPER ---
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
-
-# Safety Check for Gemini
-client = None
-brain_status = "Offline"
-if "GOOGLE_API_KEY" in st.secrets:
-    try:
-        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        brain_status = "Online 🔱"
-    except:
-        pass
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.success(f"System Status: {brain_status}")
-    
-    if not pollinations_key:
-        auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
-        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CONNECT SYSTEM</button></a>', unsafe_allow_html=True)
-
     st.divider()
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)", "Veda (Share Hub)"], 
-                          icons=["cpu", "layers", "share"], default_index=0)
+                          icons=["cpu", "layers", "share"], default_index=1)
 
 # --- 3. MAIN INTERFACE ---
 
-if selected == "Medha (Chat)":
-    # --- 🌟 THE GLOWING LOGO CSS 🌟 ---
-    st.markdown("""
-        <style>
-        .glow-text {
-            font-size: 60px;
-            color: #fff;
-            text-align: center;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 50px;
-            margin-bottom: 50px;
-            text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ffffff, 0 0 40px #ffffff;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        </style>
-        <h1 class="glow-text">VEDA 3.0 ULTRA</h1>
-    """, unsafe_allow_html=True)
+if selected == "Srijan (Images)":
+    st.markdown("<br><h1 style='text-align: center; color: #fff; text-shadow: 0 0 10px #fff;'>SRIJAN ARCHITECT</h1>", unsafe_allow_html=True)
     
-    if prompt := st.chat_input("Command VEDA..."):
-        with st.chat_message("user"): 
-            st.markdown(prompt)
+    # 🛠️ STATUS CHECK 🛠️
+    if not pollinations_key:
+        st.error("🔒 ACCESS DENIED: System Not Linked.")
+        auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
+        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CLICK TO CONNECT POLLINATIONS</button></a>', unsafe_allow_html=True)
+        st.info("The Architect requires a Pollinations link to visualize images.")
+    else:
+        # THE INPUT BOX
+        user_idea = st.text_input("Describe your vision (e.g., A futuristic Indian city):", key="srijan_input")
         
-        with st.chat_message("assistant"):
-            success = False
-            # A. TRY GEMINI
-            if client:
-                try:
-                    response = client.models.generate_content(
-                        model="gemini-1.5-flash-8b", 
-                        contents=f"{IDENTITY_INSTRUCTION}\n\nUser: {prompt}"
-                    )
-                    st.markdown(response.text)
-                    success = True
-                except:
-                    st.caption("🔄 Re-routing...")
+        col1, col2, col3 = st.columns([1,1,1])
+        with col2:
+            render_btn = st.button("✨ EXECUTE RENDER", use_container_width=True)
 
-            # B. BACKUP (POLLINATIONS)
-            if not success:
-                try:
-                    clean_p = urllib.parse.quote(prompt)
-                    sys_p = urllib.parse.quote(f"You are VEDA 3.0 ULTRA by {CREATOR}.")
-                    p_url = f"https://gen.pollinations.ai/text/{clean_p}?model=mistral&system={sys_p}"
-                    if pollinations_key: p_url += f"&key={pollinations_key}"
-                    
-                    p_res = requests.get(p_url, timeout=10)
-                    st.markdown(p_res.text)
-                except:
-                    st.error("VEDA is currently in deep meditation. Try again shortly.")
+        if render_btn:
+            if user_idea:
+                with st.spinner("🌀 Srijan is visualizing your vision..."):
+                    try:
+                        # 1. Encode the text correctly
+                        encoded_prompt = urllib.parse.quote(user_idea)
+                        
+                        # 2. Build the 2026 stable URL
+                        # We use model=flux for the highest quality
+                        img_url = f"https://gen.pollinations.ai/image/{encoded_prompt}?width=1024&height=1024&nologo=true&model=flux&key={pollinations_key}"
+                        
+                        # 3. Display with a nice border
+                        st.markdown("---")
+                        st.image(img_url, caption=f"Architectural Render by {CREATOR}", use_column_width=True)
+                        st.balloons()
+                        
+                        # 4. Download Link
+                        st.success("Vision Rendered Successfully!")
+                        st.markdown(f"[📥 Click here to Download High-Res]({img_url})")
+                        
+                    except Exception as e:
+                        st.error(f"Render Failed: {e}")
+            else:
+                st.warning("Please enter a description for the Architect.")
 
-elif selected == "Srijan (Images)":
-    st.title("🏗️ Srijan Image Architect")
-    # ... [Keep your working Srijan code here] ...
-
-elif selected == "Veda (Share Hub)":
-    st.title("🌐 Veda Network Hub")
-    # ... [Keep your Share Hub grid here] ...
+# [Rest of your Medha and Veda Hub code follows below...]
