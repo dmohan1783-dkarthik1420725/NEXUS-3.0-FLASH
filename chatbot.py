@@ -8,17 +8,16 @@ st.set_page_config(page_title="NEXUS Flash India", page_icon="⚡", layout="wide
 CREATOR = "Dumpala Karthik"
 SYSTEM_PROMPT = f"Your name is NEXUS 3.1. You were developed and created by {CREATOR}."
 
-# Connect to Google Gemini (Intelligence)
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     st.sidebar.success("NEXUS Brain Online ⚡")
 except Exception:
-    st.sidebar.error("NEXUS Brain Offline. Check Secrets.")
+    st.sidebar.error("NEXUS Brain Offline.")
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS FLASH INDIA</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>NEXUS FLASH INDIA</h3>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: #888;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
     st.divider()
 
@@ -29,7 +28,6 @@ with st.sidebar:
         default_index=0,
         styles={"nav-link-selected": {"background-color": "#ff4b4b"}}
     )
-
     st.divider()
     qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://nexus-flash-india.streamlit.app"
     st.image(qr_url, width=150, caption="Scan to Launch")
@@ -38,19 +36,12 @@ with st.sidebar:
 
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b; font-size: 60px;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
-    
     if prompt := st.chat_input("Command NEXUS..."):
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-                )
-                st.markdown(response.text)
-            except Exception as e:
-                st.error("Intelligence is currently busy. Please try again in a moment.")
+            response = client.models.generate_content(model="gemini-1.5-flash", contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}")
+            st.markdown(response.text)
 
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
@@ -58,25 +49,33 @@ elif selected == "Neural Architect":
     
     if st.button("EXECUTE RENDER"):
         if design_prompt:
-            # Pollinations is used here to avoid the 429 RESOURCE_EXHAUSTED error
-            image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true&seed=42"
-            
-            # --- THE FACILITY BOX (Green Outline) ---
-            st.markdown(f"""
-            <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); margin-bottom: 25px;">
-                <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin: 0;">
-                    NEXUS_SYSTEM_CODE_GENERATED:
-                </p>
-                <code style="color: #ffffff; font-size: 14px;">
-                    &lt;img src="{image_url}" alt="NEXUS_Architect_Render"&gt;
-                </code>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Display the Image
-            st.image(image_url, caption=f"Visual Render by {CREATOR}")
+            with st.spinner("Generating Neural Code..."):
+                # 1. Generate the 'Big' HTML text using Gemini (100-200 words of 'code')
+                code_response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=f"Generate a very long, complex-looking HTML and CSS code block (about 150 words) for a professional UI component related to: {design_prompt}. Output ONLY the raw code."
+                )
+                fake_code = code_response.text
+
+                # 2. Get the Pollinations Image
+                image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true"
+                
+                # --- THE BIG GREEN MATRIX BOX ---
+                st.markdown(f"""
+                <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); height: 300px; overflow-y: scroll; margin-bottom: 25px;">
+                    <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
+                        NEXUS_NEURAL_STRUCTURE_DECODED:
+                    </p>
+                    <pre style="color: #28a745; font-size: 12px; white-space: pre-wrap; word-wrap: break-word;">
+{fake_code}
+                    </pre>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 3. Final Image Display
+                st.image(image_url, caption=f"Visual Render by {CREATOR}")
         else:
-            st.warning("Please enter a description.")
+            st.warning("Enter a description first.")
 
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
