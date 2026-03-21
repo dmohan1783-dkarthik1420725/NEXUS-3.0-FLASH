@@ -81,18 +81,4 @@ elif selected == "Neural Architect":
     if not pollinations_key:
         st.info("⚡ Please click the 'CONNECT' button in the sidebar to enable the Image Facility.")
     else:
-        design_prompt = st.text_input("Describe the visual you want to build:")
-        
-        if st.button("EXECUTE RENDER"):
-            if design_prompt:
-                with st.spinner("Decoding Neural Structure..."):
-                    try:
-                        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                        code_query = f"Write 150 words of complex HTML/CSS code for: {design_prompt}"
-                        code_res = client.models.generate_content(model="gemini-2.5-flash", contents=code_query)
-                        matrix_text = code_res.text
-
-                        image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?key={pollinations_key}&nologo=true"
-                        
-                        st.markdown(f"""
-                        <div style="border: 2px solid #28a7
+        design_prompt = st.text_input("Describe the visual
