@@ -19,27 +19,27 @@ with st.sidebar:
     st.markdown(f"<p style='text-align: center; color: #888;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
     st.divider()
 
-    # THE FACILITY: CONNECT BUTTON
+    # THE FACILITY: CONNECT BUTTON (Fixed for GitHub Refusal)
     if not pollinations_key:
         st.warning("Neural Architect Offline")
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
+        
+        # This JavaScript 'window.open' is the strongest way to stop 'Refused to Connect'
         st.markdown(f"""
-            <a href="{auth_url}" target="_blank">
-                <button style="
-                    width:100%; 
-                    background-color:#ff4b4b; 
-                    color:white; 
-                    border:none; 
-                    padding:12px; 
-                    border-radius:8px; 
-                    font-weight:bold;
-                    cursor:pointer;
-                    box-shadow: 0px 4px 10px rgba(255, 75, 75, 0.3);">
-                    🔌 CONNECT POLLINATIONS
-                </button>
-            </a>
+            <button onclick="window.open('{auth_url}', '_blank')" style="
+                width:100%; 
+                background-color:#ff4b4b; 
+                color:white; 
+                border:none; 
+                padding:12px; 
+                border-radius:8px; 
+                font-weight:bold;
+                cursor:pointer;
+                box-shadow: 0px 4px 10px rgba(255, 75, 75, 0.3);">
+                🔌 CONNECT POLLINATIONS
+            </button>
             """, unsafe_allow_html=True)
-        st.caption("Login in the new tab to unlock images.")
+        st.caption("Note: Login opens in a new tab to bypass GitHub security.")
     else:
         st.success("Neural Architect Linked 🌸")
         if st.button("🔌 DISCONNECT"):
@@ -60,25 +60,4 @@ with st.sidebar:
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b; font-size: 60px;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
     
-    if prompt := st.chat_input("Command NEXUS..."):
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            try:
-                client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-                )
-                st.markdown(response.text)
-            except Exception:
-                st.error("Intelligence Error: Please check your Google API Key.")
-
-elif selected == "Neural Architect":
-    st.title("🏗️ Neural Architect")
-    
-    if not pollinations_key:
-        st.info("⚡ Please click the 'CONNECT' button in the sidebar to enable the Image Facility.")
-    else:
-        design_prompt = st.text_input("Describe the visual
+    if prompt := st.chat_input("Command
