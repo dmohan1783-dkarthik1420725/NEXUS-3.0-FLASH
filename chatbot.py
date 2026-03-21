@@ -61,7 +61,6 @@ if selected == "Intelligence":
                 success = False
                 for attempt in range(3):
                     try:
-                        # Fixed the string termination and retry logic
                         response = client.models.generate_content(
                             model="gemini-1.5-flash", 
                             contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
@@ -102,5 +101,11 @@ elif selected == "Neural Architect":
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
     st.markdown(f"**NEXUS 3.0 ULTRA developed by {CREATOR}**")
+    # Carefully closed triple-quote string below
     st.markdown("""
-        <div style="display: flex; gap: 20px; margin-top: 1
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+            <a href="https://wa.me/" target="_blank" style="text-decoration:none; color:#25D366; font-weight:bold;">WhatsApp</a>
+            <span style="color:#888;">|</span>
+            <a href="https://instagram.com/" target="_blank" style="text-decoration:none; color:#E1306C; font-weight:bold;">Instagram</a>
+        </div>
+    """, unsafe_allow_html=True)
