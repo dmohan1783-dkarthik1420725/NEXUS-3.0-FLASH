@@ -58,63 +58,12 @@ if selected == "Intelligence":
             st.markdown(prompt)
         with st.chat_message("assistant"):
             try:
-                # Primary Brain: Gemini 1.5 Flash 8b
                 response = client.models.generate_content(
                     model="gemini-1.5-flash-8b", 
                     contents=f"{IDENTITY_INSTRUCTION}\n\nUser: {prompt}"
                 )
                 st.markdown(response.text)
             except:
-                # Failover Brain: Authorized Pollinations Text
                 st.caption("🚀 Switching to NEXUS Backup Brain...")
                 try:
-                    sys_msg = f"You are NEXUS 3.0 ULTRA, created and developed by {CREATOR}."
-                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system={sys_msg.replace(' ', '%20')}&key={pollinations_key}"
-                    p_res = requests.get(p_url, timeout=10)
-                    if p_res.status_code == 200:
-                        st.markdown(p_res.text)
-                    else:
-                        st.error("Authentication Error. Please reconnect in the sidebar.")
-                except:
-                    st.error("Both brains are overloaded. Please try again in 30 seconds.")
-
-# [TAB 2: NEURAL ARCHITECT]
-elif selected == "Neural Architect":
-    st.title("🏗️ Neural Architect")
-    if not pollinations_key:
-        st.error("Please click 'CONNECT POLLINATIONS' in the sidebar first!")
-    else:
-        user_idea = st.text_input("Vision:", placeholder="e.g. A futuristic workspace in Gurugram")
-        if st.button("EXECUTE RENDER"):
-            if user_idea:
-                with st.spinner("Visualizing..."):
-                    clean_idea = user_idea.replace(" ", "%20")
-                    image_url = f"https://gen.pollinations.ai/image/{clean_idea}?width=1024&height=1024&nologo=true&model=flux&enhance=true&key={pollinations_key}"
-                    st.image(image_url, caption=f"Neural Render for {CREATOR}", use_column_width=True)
-                    st.balloons()
-            else:
-                st.warning("Please enter a description.")
-
-# [TAB 3: SHARE HUB]
-elif selected == "Share Hub":
-    st.title("🌐 NEXUS Mega Share Hub")
-    st.markdown(f"**NEXUS 3.0 ULTRA Architect: {CREATOR}**")
-    st.write("Connect with the network across all official platforms:")
-
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown('[![WhatsApp](https://img.icons8.com/color/96/whatsapp.png)](https://wa.me/)')
-        st.caption("WhatsApp")
-        st.markdown('[![Instagram](https://img.icons8.com/color/96/instagram-new.png)](https://instagram.com/)')
-        st.caption("Instagram")
-        st.markdown('[![Threads](https://img.icons8.com/color/96/threads.png)](https://threads.net/)')
-        st.caption("Threads")
-    with col2:
-        st.markdown('[![YouTube](https://img.icons8.com/color/96/youtube-play.png)](https://youtube.com/)')
-        st.caption("YouTube")
-        st.markdown('[![Facebook](https://img.icons8.com/color/96/facebook-new.png)](https://facebook.com/)')
-        st.caption("Facebook")
-        st.markdown('[![X](https://img.icons8.com/color/96/twitterx.png)](https://x.com/)')
-        st.caption("X / Twitter")
-    with col3:
-        st.markdown('[![Snapchat](
+                    sys_msg = f"You
