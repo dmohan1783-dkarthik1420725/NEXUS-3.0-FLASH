@@ -8,7 +8,7 @@ st.set_page_config(page_title="NEXUS Flash India", page_icon="⚡", layout="wide
 CREATOR = "Dumpala Karthik"
 SYSTEM_PROMPT = f"Your name is NEXUS 3.1. You were developed and created by {CREATOR}."
 
-# Check for Pollinations API Key in the URL (BYOP Facility)
+# Check for Pollinations API Key in the URL
 query_params = st.query_params
 pollinations_key = query_params.get("api_key", None)
 
@@ -19,7 +19,7 @@ with st.sidebar:
     st.markdown(f"<p style='text-align: center; color: #888;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
     st.divider()
 
-    # THE FACILITY: CONNECT BUTTON (GitHub Fixed)
+    # THE FACILITY: CONNECT BUTTON
     if not pollinations_key:
         st.warning("Neural Architect Offline")
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
@@ -62,56 +62,3 @@ if selected == "Intelligence":
     
     if prompt := st.chat_input("Command NEXUS..."):
         with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            try:
-                # FIXED: Corrected client initialization
-                client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-                )
-                st.markdown(response.text)
-            except Exception as e:
-                st.error("Intelligence Error: Please check your Google API Key in Secrets.")
-
-elif selected == "Neural Architect":
-    st.title("🏗️ Neural Architect")
-    
-    if not pollinations_key:
-        st.info("⚡ Please click the 'CONNECT' button in the sidebar to enable the Image Facility.")
-    else:
-        design_prompt = st.text_input("Describe the visual you want to build:")
-        
-        if st.button("EXECUTE RENDER"):
-            if design_prompt:
-                with st.spinner("Decoding Neural Structure..."):
-                    try:
-                        # FIXED: Corrected client and f-string syntax
-                        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                        code_query = f"Write 150 words of complex HTML/CSS code for: {design_prompt}"
-                        code_res = client.models.generate_content(model="gemini-2.5-flash", contents=code_query)
-                        matrix_text = code_res.text
-
-                        # Get Image using the User's Connected Key
-                        image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?key={pollinations_key}&nologo=true"
-                        
-                        # --- THE BIG GREEN MATRIX BOX ---
-                        st.markdown(f"""
-                        <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); height: 280px; overflow-y: scroll; margin-bottom: 25px;">
-                            <p style="color: #28a745; font-family: monospace; font-weight: bold;">NEXUS_SYSTEM_CODE_DECODED:</p>
-                            <pre style="color: #28a745; font-size: 12px; white-space: pre-wrap;">{matrix_text}</pre>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Display Image
-                        st.image(image_url, caption=f"Visual Render by {CREATOR}")
-                    except Exception as e:
-                        st.error("Architect Error: Rendering sequence interrupted.")
-            else:
-                st.warning("Enter a description first.")
-
-elif selected == "Share Hub":
-    st.title("🌐 Share Hub")
-    st.markdown(f"**NEXUS
