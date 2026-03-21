@@ -11,8 +11,6 @@ SYSTEM_PROMPT = f"Your name is NEXUS 3.0 ULTRA. You were developed and created b
 # --- SMART KEY LOGIC (URL vs Secrets) ---
 query_params = st.query_params
 url_key = query_params.get("api_key", None)
-
-# Looks for 'POLLINATIONS_KEY' in your Streamlit Secrets
 secrets_key = st.secrets.get("POLLINATIONS_KEY", None)
 
 # Use URL key first, fallback to Secrets key
@@ -72,4 +70,62 @@ with st.sidebar:
     )
 
     st.divider()
-    qr_url = "
+    # FIXED: Line 75 - String is now fully closed
+    qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://nexus-flash-india.streamlit.app"
+    st.image(qr_url, width=150, caption="Scan to Launch")
+
+# --- 3. MAIN INTERFACE ---
+
+if selected == "Intelligence":
+    st.markdown("<br><h1 style='text-align: center; color: #ff4b4b; font-size: 60px;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
+    
+    if prompt := st.chat_input("Command NEXUS..."):
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant"):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
+                )
+                st.markdown(response.text)
+            except Exception:
+                st.error("Intelligence is currently busy. Please try again in a moment.")
+
+elif selected == "Neural Architect":
+    st.title("🏗️ Neural Architect")
+    
+    if not pollinations_key:
+        st.info("⚡ Please click the 'CONNECT' button in the sidebar to enable the Image Facility.")
+    else:
+        design_prompt = st.text_input("Describe the visual you want to build:")
+        
+        if st.button("EXECUTE RENDER"):
+            if design_prompt:
+                image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true&seed=42&key={pollinations_key}"
+                
+                # THE FACILITY BOX (Green Outline)
+                st.markdown(f"""
+                <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); margin-bottom: 25px;">
+                    <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin: 0;">
+                        NEXUS_SYSTEM_CODE_GENERATED:
+                    </p>
+                    <code style="color: #ffffff; font-size: 14px;">
+                        &lt;img src="{image_url}" alt="NEXUS_Architect_Render"&gt;
+                    </code>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.image(image_url, caption=f"Visual Render by {CREATOR}")
+            else:
+                st.warning("Please enter a description.")
+
+elif selected == "Share Hub":
+    st.title("🌐 Share Hub")
+    st.markdown(f"**NEXUS Network developed by {CREATOR}**")
+    st.markdown("""
+        <div style="display: flex; gap: 30px; margin-top: 20px;">
+            <a href="https://wa.me/" target="_blank"><img src="https://img.icons8.com/color/48/whatsapp.png" width="60"/></a>
+            <a href="https://instagram.com/" target="_blank"><img src="https://img.icons8.com/color/48/instagram-new.png" width="60"/></a>
+        </div>
+    """, unsafe_allow_html=True)
