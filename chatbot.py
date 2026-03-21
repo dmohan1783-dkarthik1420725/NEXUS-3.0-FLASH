@@ -2,130 +2,72 @@ import streamlit as st
 from google import genai
 from streamlit_option_menu import option_menu
 
-# --- 1. CORE CONFIGURATION ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NEXUS 3.0 ULTRA", page_icon="⚡", layout="wide")
-
 CREATOR = "Dumpala Karthik"
-SYSTEM_PROMPT = f"Your name is NEXUS 3.0 ULTRA. You were developed and created by {CREATOR}."
 
-# --- SMART KEY LOGIC (URL vs Secrets) ---
+# --- SMART KEY LOGIC ---
 query_params = st.query_params
-url_key = query_params.get("api_key", None)
-secrets_key = st.secrets.get("POLLINATIONS_KEY", None)
+pollinations_key = query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", None))
 
-# Use URL key first, fallback to Secrets key
-pollinations_key = url_key if url_key else secrets_key
-
-# Connect to Google Gemini (Intelligence)
 try:
     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     st.sidebar.success("NEXUS Brain Online ⚡")
-except Exception:
-    st.sidebar.error("NEXUS Brain Offline. Check Secrets.")
+except:
+    st.sidebar.error("NEXUS Brain Offline.")
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center; color: #888;'>Architect: {CREATOR}</p>", unsafe_allow_html=True)
-    st.divider()
-
-    # THE FACILITY: SMART CONNECT BUTTON
+    st.markdown("<h1 style='text-align: center; font-size: 80px;'>⚡</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    
     if not pollinations_key:
-        st.warning("Neural Architect Offline")
-        app_url = "https://nexus-flash-india.streamlit.app"
-        auth_url = f"https://enter.pollinations.ai/authorize?redirect_url={app_url}"
-        
-        st.markdown(f"""
-            <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-                <div style="
-                    width: 100%; 
-                    background-color: #ff4b4b; 
-                    color: white; 
-                    text-align: center; 
-                    padding: 12px 0px; 
-                    border-radius: 8px; 
-                    font-weight: bold;
-                    box-shadow: 0px 4px 10px rgba(255, 75, 75, 0.3);
-                    cursor: pointer;">
-                    🔌 CONNECT POLLINATIONS
-                </div>
-            </a>
-            """, unsafe_allow_html=True)
-        st.caption("Login via GitHub to unlock images.")
+        auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
+        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">🔌 CONNECT POLLINATIONS</button></a>', unsafe_allow_html=True)
     else:
-        st.success("Neural Architect Linked 🌸")
-        if st.button("🔌 RESET / DISCONNECT"):
-            st.query_params.clear()
-            st.rerun()
+        st.success("Architect Linked 🌸")
 
     st.divider()
-
-    selected = option_menu(
-        menu_title="Main Systems",
-        options=["Intelligence", "Neural Architect", "Share Hub"],
-        icons=["cpu", "layers", "share"], 
-        default_index=0,
-        styles={"nav-link-selected": {"background-color": "#ff4b4b"}}
-    )
-
-    st.divider()
-    # FIXED: Line 75 - String is now fully closed
-    qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://nexus-flash-india.streamlit.app"
-    st.image(qr_url, width=150, caption="Scan to Launch")
+    selected = option_menu("Main Systems", ["Intelligence", "Neural Architect", "Share Hub"], icons=["cpu", "layers", "share"], default_index=0)
 
 # --- 3. MAIN INTERFACE ---
 
 if selected == "Intelligence":
     st.markdown("<br><h1 style='text-align: center; color: #ff4b4b; font-size: 60px;'>HI, HOW ARE YOU!</h1>", unsafe_allow_html=True)
-    
     if prompt := st.chat_input("Command NEXUS..."):
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        with st.chat_message("user"): st.markdown(prompt)
         with st.chat_message("assistant"):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-                )
-                st.markdown(response.text)
-            except Exception:
-                st.error("Intelligence is currently busy. Please try again in a moment.")
+            res = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+            st.markdown(res.text)
 
 elif selected == "Neural Architect":
     st.title("🏗️ Neural Architect")
-    
     if not pollinations_key:
-        st.info("⚡ Please click the 'CONNECT' button in the sidebar to enable the Image Facility.")
+        st.error("Please CONNECT in the sidebar first.")
     else:
-        design_prompt = st.text_input("Describe the visual you want to build:")
-        
+        user_idea = st.text_input("What should I build?")
         if st.button("EXECUTE RENDER"):
-            if design_prompt:
-                image_url = f"https://image.pollinations.ai/prompt/{design_prompt.replace(' ', '%20')}?width=1024&height=512&nologo=true&seed=42&key={pollinations_key}"
+            with st.spinner("Decoding..."):
+                # 1. We ask Gemini for the "Matrix Code" ONLY (150 words)
+                code_task = f"Generate 150 words of complex-looking HTML/CSS code for a futuristic UI about: {user_idea}. Output ONLY the code, no conversational text."
+                code_res = client.models.generate_content(model="gemini-2.5-flash", contents=code_task)
                 
-                # THE FACILITY BOX (Green Outline)
+                # 2. We use the CLEAN user_idea for the image, NOT the long code
+                # New 2026 URL format: gen.pollinations.ai/image/
+                clean_prompt = user_idea.replace(" ", "%20")
+                image_url = f"https://gen.pollinations.ai/image/{clean_prompt}?width=1024&height=1024&nologo=true&key={pollinations_key}"
+                
+                # --- THE GREEN BOX ---
                 st.markdown(f"""
-                <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); margin-bottom: 25px;">
-                    <p style="color: #28a745; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; margin: 0;">
-                        NEXUS_SYSTEM_CODE_GENERATED:
-                    </p>
-                    <code style="color: #ffffff; font-size: 14px;">
-                        &lt;img src="{image_url}" alt="NEXUS_Architect_Render"&gt;
-                    </code>
+                <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); height: 250px; overflow-y: scroll; margin-bottom: 20px;">
+                    <p style="color: #28a745; font-family: monospace; font-weight: bold;">NEXUS_UI_DECODED:</p>
+                    <pre style="color: #28a745; font-size: 11px; white-space: pre-wrap;">{code_res.text}</pre>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.image(image_url, caption=f"Visual Render by {CREATOR}")
-            else:
-                st.warning("Please enter a description.")
+                # 3. Display the actual image
+                st.image(image_url, caption=f"Render by {CREATOR}")
 
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
-    st.markdown(f"**NEXUS Network developed by {CREATOR}**")
-    st.markdown("""
-        <div style="display: flex; gap: 30px; margin-top: 20px;">
-            <a href="https://wa.me/" target="_blank"><img src="https://img.icons8.com/color/48/whatsapp.png" width="60"/></a>
-            <a href="https://instagram.com/" target="_blank"><img src="https://img.icons8.com/color/48/instagram-new.png" width="60"/></a>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<a href="https://wa.me/" target="_blank">WhatsApp</a> | <a href="https://instagram.com/" target="_blank">Instagram</a>', unsafe_allow_html=True)
