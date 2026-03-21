@@ -1,5 +1,6 @@
 import streamlit as st
 from google import genai
+from google.genai import types # Added for safety settings
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION ---
@@ -37,6 +38,7 @@ if selected == "Intelligence":
     if prompt := st.chat_input("Command NEXUS..."):
         with st.chat_message("user"): st.markdown(prompt)
         with st.chat_message("assistant"):
+            # Using stable model name
             res = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
             st.markdown(res.text)
 
@@ -48,25 +50,36 @@ elif selected == "Neural Architect":
         user_idea = st.text_input("What should I build?")
         if st.button("EXECUTE RENDER"):
             with st.spinner("Decoding..."):
-                # 1. We ask Gemini for the "Matrix Code" ONLY (150 words)
-                code_task = f"Generate 150 words of complex-looking HTML/CSS code for a futuristic UI about: {user_idea}. Output ONLY the code, no conversational text."
-                code_res = client.models.generate_content(model="gemini-2.5-flash", contents=code_task)
+                try:
+                    # FIX: Relax safety settings to allow code generation
+                    safe_config = types.GenerateContentConfig(
+                        safety_settings=[
+                            types.SafetySetting(category="HATE_SPEECH", threshold="BLOCK_NONE"),
+                            types.SafetySetting(category="HARASSMENT", threshold="BLOCK_NONE"),
+                            types.SafetySetting(category="DANGEROUS_CONTENT", threshold="BLOCK_NONE")
+                        ]
+                    )
+                    
+                    code_task = f"Write 150 words of complex-looking HTML/CSS code for: {user_idea}"
+                    # Updated call with safety config
+                    code_res = client.models.generate_content(
+                        model="gemini-2.5-flash", 
+                        contents=code_task,
+                        config=safe_config
+                    )
+                    
+                    image_url = f"https://gen.pollinations.ai/image/{user_idea.replace(' ', '%20')}?width=1024&height=1024&nologo=true&key={pollinations_key}"
+                    
+                    st.markdown(f"""
+                    <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); height: 250px; overflow-y: scroll; margin-bottom: 20px;">
+                        <p style="color: #28a745; font-family: monospace; font-weight: bold;">NEXUS_UI_DECODED:</p>
+                        <pre style="color: #28a745; font-size: 11px; white-space: pre-wrap;">{code_res.text}</pre>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.image(image_url, caption=f"Render by {CREATOR}")
                 
-                # 2. We use the CLEAN user_idea for the image, NOT the long code
-                # New 2026 URL format: gen.pollinations.ai/image/
-                clean_prompt = user_idea.replace(" ", "%20")
-                image_url = f"https://gen.pollinations.ai/image/{clean_prompt}?width=1024&height=1024&nologo=true&key={pollinations_key}"
-                
-                # --- THE GREEN BOX ---
-                st.markdown(f"""
-                <div style="border: 2px solid #28a745; padding: 20px; border-radius: 10px; background-color: rgba(40, 167, 69, 0.05); height: 250px; overflow-y: scroll; margin-bottom: 20px;">
-                    <p style="color: #28a745; font-family: monospace; font-weight: bold;">NEXUS_UI_DECODED:</p>
-                    <pre style="color: #28a745; font-size: 11px; white-space: pre-wrap;">{code_res.text}</pre>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 3. Display the actual image
-                st.image(image_url, caption=f"Render by {CREATOR}")
+                except Exception as e:
+                    st.error(f"Brain Overload: {str(e)[:50]}... Try a simpler prompt.")
 
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
