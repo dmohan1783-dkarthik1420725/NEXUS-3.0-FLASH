@@ -22,13 +22,12 @@ except:
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom: 0;'>⚡</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>NEXUS 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.success(f"NEXUS Brain: {brain_status}")
     
     if not pollinations_key:
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
         st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CONNECT POLLINATIONS</button></a>', unsafe_allow_html=True)
     else:
-        st.info("Architect Linked 🌸")
+        st.success("Architect Linked 🌸")
 
     st.divider()
     selected = option_menu(None, ["Intelligence", "Neural Architect", "Share Hub"], 
@@ -43,22 +42,25 @@ if selected == "Intelligence":
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
-            # STRATEGY: Try Gemini, if fails once, go to Pollinations immediately
+            # TRY GEMINI FIRST
             try:
-                # Using the lightest model for speed
                 response = client.models.generate_content(
                     model="gemini-1.5-flash-8b", 
                     contents=f"You are NEXUS 3.0 ULTRA by {CREATOR}. Short answer: {prompt}"
                 )
                 st.markdown(response.text)
             except:
-                # FAILOVER BRAIN (Instant Backup)
+                # BACKUP BRAIN (Now with Authentication!)
                 st.caption("🚀 Google Brain busy. Switching to NEXUS Backup...")
                 try:
-                    # Pollinations text API doesn't have the same strict limits
-                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system=You%20are%20NEXUS%203.0%20ULTRA%20created%20by%20{CREATOR}"
+                    # FIX: Added '&key=' at the end of the URL to provide authentication
+                    p_url = f"https://gen.pollinations.ai/text/{prompt.replace(' ', '%20')}?model=openai&system=You%20are%20NEXUS%203.0%20ULTRA%20created%20by%20{CREATOR}&key={pollinations_key}"
                     p_res = requests.get(p_url, timeout=10)
-                    st.markdown(p_res.text)
+                    
+                    if p_res.status_code == 200:
+                        st.markdown(p_res.text)
+                    else:
+                        st.error("Authentication failed. Please re-connect Pollinations in the sidebar.")
                 except:
                     st.error("System Overloaded. Please try again in a few seconds.")
 
@@ -74,8 +76,6 @@ elif selected == "Neural Architect":
                     img_url = f"https://gen.pollinations.ai/image/{user_idea.replace(' ', '%20')}?width=1024&height=1024&nologo=true&model=flux&key={pollinations_key}"
                     st.image(img_url, caption=f"Render by {CREATOR}", use_column_width=True)
                     st.balloons()
-            else:
-                st.warning("Please enter a description.")
 
 elif selected == "Share Hub":
     st.title("🌐 Share Hub")
