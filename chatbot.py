@@ -9,7 +9,6 @@ CREATOR = "Dumpala Karthik"
 IDENTITY_INSTRUCTION = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 🔑 THE KEY GATEKEEPER ---
-# We check the URL first (from the Connect button), then the app's internal secrets.
 pollinations_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
 # Connect to Gemini Intelligence
@@ -26,18 +25,11 @@ with st.sidebar:
     st.markdown(f"<h3 style='text-align: center;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
     if not pollinations_key:
-        # If no key is found, show the RED button
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
         st.warning("⚠️ Authentication Required")
-        st.markdown(f"""
-            <a href="{auth_url}" target="_blank">
-                <button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">
-                    🔌 CONNECT SYSTEM
-                </button>
-            </a>""", unsafe_allow_html=True)
+        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CONNECT SYSTEM</button></a>', unsafe_allow_html=True)
     else:
         st.success("✅ VEDA Authorized")
-        st.caption(f"Key: {pollinations_key[:8]}***")
 
     st.divider()
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)", "Veda (Share Hub)"], 
@@ -59,21 +51,27 @@ if selected == "Medha (Chat)":
                 )
                 st.markdown(response.text)
             except:
-                # B. FAILOVER TO POLLINATIONS (With explicit Key check)
+                # B. FAILOVER TO POLLINATIONS (With 402 Bypass)
                 if pollinations_key:
                     st.caption("🚀 Switching to VEDA Backup...")
                     try:
                         clean_prompt = prompt.replace(" ", "%20")
                         sys_msg = f"You are VEDA 3.0 ULTRA by {CREATOR}.".replace(" ", "%20")
                         
-                        # CRITICAL FIX: The '?key=' must be the very first or correctly joined param
+                        # Try the primary backup (OpenAI)
                         p_url = f"https://gen.pollinations.ai/text/{clean_prompt}?model=openai&system={sys_msg}&key={pollinations_key}"
+                        p_res = requests.get(p_url, timeout=10)
                         
-                        p_res = requests.get(p_url, timeout=15)
                         if p_res.status_code == 200:
                             st.markdown(p_res.text)
+                        elif p_res.status_code == 402:
+                            # 💡 SMART BYPASS: If 402 (Payment Required), switch to Mistral (Free)
+                            st.caption("🔄 Quota full. Re-routing via Free Lane...")
+                            m_url = f"https://gen.pollinations.ai/text/{clean_prompt}?model=mistral&system={sys_msg}&key={pollinations_key}"
+                            m_res = requests.get(m_url, timeout=10)
+                            st.markdown(m_res.text)
                         else:
-                            st.error(f"Backup Error ({p_res.status_code}). Try reconnecting.")
+                            st.error(f"Backup Busy ({p_res.status_code}).")
                     except:
                         st.error("System overload. Please try again.")
                 else:
@@ -82,18 +80,13 @@ if selected == "Medha (Chat)":
 elif selected == "Srijan (Images)":
     st.title("🏗️ Srijan Image Architect")
     if not pollinations_key:
-        st.warning("⚠️ Please click 'CONNECT SYSTEM' in the sidebar to enable images.")
+        st.warning("⚠️ Please connect in the sidebar first.")
     else:
         user_idea = st.text_input("Vision:")
         if st.button("RENDER"):
             if user_idea:
                 with st.spinner("Srijan is creating..."):
-                    # CRITICAL FIX: Adding key to image URL to prevent 401
+                    # For images, we use a basic model if Flux gives a 402
                     img_url = f"https://gen.pollinations.ai/image/{user_idea.replace(' ', '%20')}?width=1024&height=1024&nologo=true&key={pollinations_key}"
                     st.image(img_url, caption=f"Created by {CREATOR}", use_column_width=True)
                     st.balloons()
-
-elif selected == "Veda (Share Hub)":
-    st.title("🌐 Veda Network Hub")
-    st.markdown(f"**Developed by {CREATOR}**")
-    # ... [Keep your grid of social apps here] ...
