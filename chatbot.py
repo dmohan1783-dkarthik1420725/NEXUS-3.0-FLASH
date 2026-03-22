@@ -2,11 +2,22 @@ import streamlit as st
 from google import genai
 import requests
 import urllib.parse
+from datetime import datetime  # Added for time
+import pytz  # Added for IST timezone
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION & IDENTITY ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
+
+# 🌍 GLOBAL TIME SYNC (IST)
+ist = pytz.timezone('Asia/Kolkata')
+def get_now_full():
+    return datetime.now(ist).strftime("%A, %d %B %Y")
+
+def get_now_time():
+    return datetime.now(ist).strftime("%I:%M %p")
+
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Always mention him."
 
 # --- 🔑 KEY RETRIEVAL ---
@@ -22,8 +33,19 @@ except Exception:
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center; font-size: 80px;'>🔱</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    
+    # --- 🕒 NEW SIDEBAR CLOCK WIDGET ---
+    st.markdown("---")
+    st.markdown(f"""
+        <div style="background-color: rgba(255, 140, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
+            <p style="margin:0; font-size: 14px; color: #FF8C00; font-weight: bold; letter-spacing: 1px;">📅 {get_now_full()}</p>
+            <p style="margin:5px 0 0 0; font-size: 28px; color: white; font-weight: 800; font-family: 'Courier New', monospace;">{get_now_time()}</p>
+            <p style="margin:0; font-size: 10px; color: #888;">INDIAN STANDARD TIME</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.markdown("---")
     
     if not p_key:
         auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
@@ -64,9 +86,15 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             success = False
+            # Pass the current time to the AI so it knows what time it is
+            time_context = f"Current Time: {get_now_time()} on {get_now_full()}"
+            
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n\nUser: {prompt}")
+                    res = client.models.generate_content(
+                        model="gemini-1.5-flash-8b", 
+                        contents=f"{IDENTITY}\n{time_context}\n\nUser: {prompt}"
+                    )
                     st.markdown(res.text)
                     success = True
                 except Exception:
@@ -75,8 +103,8 @@ if selected == "Medha (Chat)":
             if not success:
                 try:
                     q = urllib.parse.quote(prompt)
-                    sys = urllib.parse.quote(IDENTITY)
-                    p_url = f"https://gen.pollinations.ai/text/{q}?model=mistral&system={sys}"
+                    sys_encoded = urllib.parse.quote(f"{IDENTITY}\n{time_context}")
+                    p_url = f"https://gen.pollinations.ai/text/{q}?model=mistral&system={sys_encoded}"
                     if p_key: p_url += f"&key={p_key}"
                     
                     r = requests.get(p_url, timeout=12)
@@ -112,8 +140,9 @@ elif selected == "Srijan (Images)":
 
 # [TAB 3: VEDA HUB]
 elif selected == "Veda (Hub)":
-    st.title("🌐 Veda Network Hub")
-    st.markdown(f"**Architect: {CREATOR}**")
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">VEDA NETWORK HUB</div>', unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center;'><b>Architect: {CREATOR}</b></p>", unsafe_allow_html=True)
     cols = st.columns(4)
     apps = [("WhatsApp", "whatsapp"), ("Instagram", "instagram-new"), ("YouTube", "youtube-play"), ("Facebook", "facebook-new")]
     for i, (name, icon) in enumerate(apps):
