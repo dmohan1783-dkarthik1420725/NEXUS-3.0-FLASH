@@ -16,6 +16,7 @@ def get_now_full():
 def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
+# IDENTITY CHIP
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY ---
@@ -31,8 +32,6 @@ def add_to_memory(m_type, content):
 # --- 3. INITIALIZATION (STRICT 3.1) ---
 client = None
 api_status = "🔴 Offline"
-# Using the specific 3.1 models from your authorized list
-MODELS_31 = ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview"]
 
 if "GOOGLE_API_KEY" in st.secrets:
     try:
@@ -78,7 +77,6 @@ if selected == "Medha (Chat)":
         plus_menu = st.popover("➕", use_container_width=True)
         cam_file = plus_menu.camera_input("📷 Camera")
         gal_file = plus_menu.file_uploader("🖼️ Gallery", type=['png', 'jpg', 'jpeg'])
-        doc_file = plus_menu.file_uploader("📁 Files", type=['pdf', 'txt'])
 
     active_visual = cam_file or gal_file
     if active_visual:
@@ -95,21 +93,32 @@ if selected == "Medha (Chat)":
             success = False
             
             if client:
-                # Optimized prompt for the 3.1 "Thinking" models
-                content = [f"{IDENTITY}\n\nUser Question: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n\nUser Question: {prompt}"
+                # 🛠️ 3.1 OPTIMIZATION: Thinking level set to minimal for speed
+                config = {"thinking_level": "minimal", "temperature": 0.8}
                 
-                # Try 3.1 Pro first, then 3.1 Flash Lite
-                for model_name in MODELS_31:
+                # Try 3.1 Pro Preview
+                try:
+                    res = client.models.generate_content(
+                        model="gemini-3.1-pro-preview",
+                        contents=[f"{IDENTITY}\nTask: Describe this: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
+                        config=config
+                    )
+                    answer = res.text
+                    success = True
+                except:
+                    # Try 3.1 Flash Lite Preview (Fastest backup)
                     try:
-                        res = client.models.generate_content(model=model_name, contents=content)
+                        res = client.models.generate_content(
+                            model="gemini-3.1-flash-lite-preview",
+                            contents=[f"{IDENTITY}\nAnalyze: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
+                            config=config
+                        )
                         answer = res.text
                         success = True
-                        break # Stop if successful
-                    except:
-                        continue 
+                    except: pass 
 
             if not success:
-                answer = "🔱 **3.1 Engine Latency.** The 3.1 neural links are currently congested. Please retry in 10 seconds."
+                answer = "🔱 **3.1 Sync Interrupted.** The high-speed links are currently full. Please try again in a few moments."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
