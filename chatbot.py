@@ -38,7 +38,7 @@ if "GOOGLE_API_KEY" in st.secrets:
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.info(f"📅 {get_now()}") # Sidebar shows live time
+    st.info(f"📅 {get_now()}")
     
     st.divider()
     st.markdown("### 🧠 NEURAL MEMORY")
@@ -65,13 +65,11 @@ if selected == "Medha (Chat)":
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     if prompt := st.chat_input("Command VEDA..."):
-        # 🕒 REFRESH TIME AT THE MOMENT OF SENDING
-        live_time = get_now()
-        # Add to logs
         add_to_memory("MEDHA", prompt)
         
-        # 🆔 INJECT TIME & IDENTITY DIRECTLY INTO THE MESSAGE
-        context_prompt = f"SYSTEM: You are VEDA 3.0 ULTRA by {CREATOR}. The current time is {live_time}.\nUSER: {prompt}"
+        # 🆔 Contextual Prompt
+        live_time = get_now()
+        context_prompt = f"System: You are VEDA 3.0 ULTRA by {CREATOR}. Time: {live_time}. User: {prompt}"
         
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -88,22 +86,22 @@ if selected == "Medha (Chat)":
                     success = True
                 except: st.caption("🔄 Rotating...")
 
-            # --- BACKUP: POLLINATIONS ---
+            # --- BACKUP: POLLINATIONS (Fixed 404 URL) ---
             if not success:
                 try:
-                    q = urllib.parse.quote(context_prompt)
-                    p_url = f"https://gen.pollinations.ai/text/{q}?model=mistral"
+                    # ✅ ENCODE ENTIRE PROMPT TO PREVENT 404
+                    q_safe = urllib.parse.quote(context_prompt)
+                    # Use the stable /text/ prompt endpoint
+                    p_url = f"https://text.pollinations.ai/{q_safe}?model=openai&system=AI"
+                    
                     if p_key: p_url += f"&key={p_key}"
+                    
                     r = requests.get(p_url, timeout=12)
-                    answer = r.text
-                except: answer = "System Offline."
+                    if r.status_code == 200:
+                        answer = r.text
+                    else:
+                        answer = f"Error {r.status_code}: VEDA is re-calibrating."
+                except: answer = "Connection Interrupt."
 
-            # Clean the response to avoid the "Help" wall error
-            final_response = str(answer).split("stmodulestreamlit")[0].strip()
-            
-            st.markdown(final_response)
-            st.session_state.chat_history.append({"role": "assistant", "content": final_response})
-
-elif selected == "Srijan (Images)":
-    # [Your working Srijan code here]
-    pass
+            # Final Cleanup
+            final_response = str(answer
