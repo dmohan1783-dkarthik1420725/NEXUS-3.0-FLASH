@@ -22,7 +22,9 @@ if "neural_logs" not in st.session_state:
     st.session_state.neural_logs = []
 
 def add_to_memory(m_type, content):
-    log_entry = f"[{datetime.now(ist).strftime('%H:%M:%S')}] {m_type}: {content[:15]}..."
+    # Fixed the variable name here to ensure it uses the function correctly
+    timestamp = datetime.now(ist).strftime("%H:%M:%S")
+    log_entry = f"[{timestamp}] {m_type}: {content[:15]}..."
     st.session_state.neural_logs.insert(0, log_entry)
 
 # --- 🔑 KEY RETRIEVAL ---
@@ -68,5 +70,48 @@ if selected == "Medha (Chat)":
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         
-        # 🆔 Contextual Prompt
-        live
+        # 🆔 Variable names fixed to prevent NameError
+        current_date_time = get_now()
+        context_prompt = f"System: You are VEDA 3.0 ULTRA by {CREATOR}. Time: {current_date_time}. User: {prompt}"
+        
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            answer = ""
+            success = False
+            
+            # --- PRIMARY: GEMINI ---
+            if client:
+                try:
+                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=context_prompt)
+                    answer = res.text
+                    success = True
+                except Exception: 
+                    st.caption("🔄 Rotating...")
+
+            # --- BACKUP: POLLINATIONS ---
+            if not success:
+                try:
+                    q_safe = urllib.parse.quote(context_prompt)
+                    p_url = f"https://text.pollinations.ai/{q_safe}?model=openai&system=AI"
+                    if p_key: p_url += f"&key={p_key}"
+                    
+                    r = requests.get(p_url, timeout=12)
+                    if r.status_code == 200:
+                        answer = r.text
+                    else:
+                        answer = f"Error {r.status_code}: System busy."
+                except Exception: 
+                    answer = "Connection Interrupt."
+
+            # Clean and Display
+            final_response = str(answer).split("stmodulestreamlit")[0].strip()
+            st.markdown(final_response)
+            st.session_state.chat_history.append({"role": "assistant", "content": final_response})
+
+elif selected == "Srijan (Images)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    
+    if not p_key:
