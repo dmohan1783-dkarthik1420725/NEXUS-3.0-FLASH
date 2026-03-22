@@ -33,7 +33,8 @@ client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    except: client = None
+    except Exception: 
+        client = None
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
@@ -68,15 +69,4 @@ if selected == "Medha (Chat)":
         add_to_memory("MEDHA", prompt)
         
         # 🆔 Contextual Prompt
-        live_time = get_now()
-        context_prompt = f"System: You are VEDA 3.0 ULTRA by {CREATOR}. Time: {live_time}. User: {prompt}"
-        
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            answer = ""
-            success = False
-            
-            # --- PRIMARY: GEMINI ---
-            if client
+        live
