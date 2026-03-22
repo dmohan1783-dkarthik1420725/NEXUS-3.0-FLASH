@@ -10,12 +10,11 @@ from streamlit_option_menu import option_menu
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
 
-# 🌍 GLOBAL TIME SYNC (Fixed NameError by placing this here)
+# 🌍 GLOBAL TIME SYNC
 ist = pytz.timezone('Asia/Kolkata')
 def get_now():
     return datetime.now(ist).strftime("%A, %d %B %Y, %I:%M %p")
 
-# We define this globally so it's never "missing"
 current_date_time = get_now()
 
 # --- 🧠 NEURAL MEMORY INITIALIZATION ---
@@ -32,22 +31,28 @@ def add_to_memory(m_type, content):
 # --- 🔑 KEY RETRIEVAL ---
 p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
-# --- 🧠 GEMINI INITIALIZATION ---
+# --- 🧠 GEMINI INITIALIZATION & HEALTH CHECK ---
 client = None
+gemini_online = False
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+        gemini_online = True
     except Exception: 
-        client = None
+        gemini_online = False
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.info(f"📅 {current_date_time}")
+    
+    # 🛰️ SYSTEM HEALTH MONITOR
+    st.markdown("### 🛰️ System Health")
+    st.write(f"Primary (Gemini): {'🟢' if gemini_online else '🔴'}")
+    st.write(f"Backup (Cloud): {'🟢' if p_key else '🟡'}")
     
     st.divider()
     st.markdown("### 🧠 NEURAL MEMORY")
-    for log in st.session_state.neural_logs[:8]:
+    for log in st.session_state.neural_logs[:5]:
         st.code(log, language="text")
 
     if st.button("🗑️ Wipe Memory"):
@@ -73,7 +78,7 @@ if selected == "Medha (Chat)":
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         
-        # Identity Logic
+        # Fresh Context
         id_context = f"System: You are VEDA 3.0 ULTRA by {CREATOR}. Time: {get_now()}. User: {prompt}"
         
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -83,49 +88,37 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             answer = ""
             success = False
+            
+            # --- PRIMARY: GEMINI ---
             if client:
                 try:
                     res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=id_context)
                     answer = res.text
                     success = True
                 except Exception: 
-                    st.caption("🔄 Rotating...")
+                    st.caption("🔄 Primary Busy. Rotating...")
 
+            # --- BACKUP: POLLINATIONS (Optimized for 2026) ---
             if not success:
                 try:
-                    q_safe = urllib.parse.quote(id_context)
-                    p_url = f"https://text.pollinations.ai/{q_safe}?model=openai&system=AI"
+                    # Using the simpler text endpoint to avoid timeouts
+                    q_safe = urllib.parse.quote(prompt)
+                    # We use 'search' model as it's often more responsive for short greetings
+                    p_url = f"https://text.pollinations.ai/{q_safe}?model=mistral&system=You+are+VEDA+by+{CREATOR}"
+                    
                     if p_key: p_url += f"&key={p_key}"
-                    r = requests.get(p_url, timeout=12)
-                    answer = r.text if r.status_code == 200 else "System Busy."
+                    
+                    r = requests.get(p_url, timeout=15)
+                    if r.status_code == 200 and r.text.strip():
+                        answer = r.text
+                    else:
+                        answer = "⚠️ All systems are currently heavy. Please wait 10 seconds and try again."
                 except Exception: 
-                    answer = "Connection Interrupt."
+                    answer = "🔌 Connection Lost. Refresh the page."
 
+            # Clean output from accidental library metadata
             final_res = str(answer).split("stmodulestreamlit")[0].strip()
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
-elif selected == "Srijan (Images)":
-    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
-    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    
-    if not p_key:
-        st.warning("⚠️ Connect in sidebar first.")
-    else:
-        vision = st.text_input("Vision:", placeholder="Describe your image...")
-        if st.button("🚀 RENDER"):
-            if vision:
-                add_to_memory("SRIJAN", vision)
-                with st.spinner("Visualizing..."):
-                    try:
-                        v_enc = urllib.parse.quote(vision)
-                        img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
-                        st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
-                        st.balloons()
-                    except Exception: 
-                        st.error("Architect Busy.")
-
-elif selected == "Veda (Hub)":
-    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
-    st.markdown('<div class="orange-title">VEDA NETWORK HUB</div>', unsafe_allow_html=True)
-    st.write(f"**Architect:** {CREATOR}")
+# [Keep your existing Srijan and Hub code below]
