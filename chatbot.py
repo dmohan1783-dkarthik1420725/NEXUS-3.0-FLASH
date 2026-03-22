@@ -4,7 +4,6 @@ import requests
 import urllib.parse
 from datetime import datetime
 import pytz
-import time
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION & IDENTITY ---
@@ -30,21 +29,22 @@ def add_to_memory(m_type, content):
 
 # --- 3. INITIALIZATION ---
 client = None
-api_status = "🔴 Offline"
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        api_status = "🟢 Ready (Smart Router)"
-    except: api_status = "❌ Config Error"
+    except: client = None
 
-# --- 4. SIDEBAR ---
+# --- 4. SIDEBAR (REFINED) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    st.info(f"🛰️ System: {api_status}")
-    st.markdown(f"📅 **{get_now_full()}**\n🕒 **{get_now_time()} IST**")
     
+    # NEW DATE & TIME SECTION
     st.divider()
+    st.markdown(f"📅 **{get_now_full()}**")
+    st.markdown(f"🕒 **{get_now_time()} IST**")
+    st.divider()
+    
     st.markdown("### 🧠 NEURAL LOGS")
     for log in st.session_state.neural_logs[:5]:
         st.code(f"{log['time']} | {log['text'][:15]}...", language="text")
@@ -59,7 +59,7 @@ with st.sidebar:
                           icons=["cpu", "layers"], default_index=0)
 
 # --- 5. MAIN INTERFACE ---
-ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}.stPopover { margin-top: 23px; }</style>"
+ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}</style>"
 
 if selected == "Medha (Chat)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
@@ -68,19 +68,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- ➕ ACTION BAR (Lower Left) ---
-    st.markdown("---")
-    act_col1, act_col2 = st.columns([1, 12])
-    with act_col1:
-        plus_menu = st.popover("➕", use_container_width=True)
-        cam_file = plus_menu.camera_input("📷 Camera")
-        gal_file = plus_menu.file_uploader("🖼️ Gallery", type=['png', 'jpg', 'jpeg'])
-
-    active_visual = cam_file or gal_file
-    if active_visual:
-        st.image(active_visual, caption="📎 Attachment Ready", width=150)
-
-    # 📥 MAIN CHAT INPUT
+    # 📥 CLASSIC CHAT INPUT
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -90,46 +78,32 @@ if selected == "Medha (Chat)":
             answer = ""
             success = False
             
-            # 🛠️ IMAGE PRE-PROCESSING (The Byte Buffer Fix)
-            final_visual = None
-            if active_visual:
-                final_visual = {"mime_type": active_visual.type, "data": active_visual.getvalue()}
-            
             if client:
-                # 🚀 SMART PIPELINE
-                if active_visual:
-                    model_pipeline = ["gemini-2.0-flash", "gemini-3.1-pro-preview", "gemini-1.5-flash"]
-                else:
-                    model_pipeline = ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview", "gemini-1.5-flash"]
-                
+                # Optimized pipeline for high-intelligence text
+                model_pipeline = ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview", "gemini-1.5-flash"]
                 for model_choice in model_pipeline:
                     try:
-                        cfg = {"thinking_level": "minimal"} if "3.1" in model_choice else None
-                        
                         res = client.models.generate_content(
                             model=model_choice,
-                            contents=[f"{IDENTITY}\nAnalyze/Read: {prompt}", final_visual] if final_visual else f"{IDENTITY}\n{prompt}",
-                            config=cfg
+                            contents=f"{IDENTITY}\n{prompt}"
                         )
                         answer = res.text
                         if answer and "IMPORTANT NOTICE" not in answer:
                             success = True
                             break
-                    except:
-                        continue 
+                    except: continue 
 
-            # --- FINAL FALLBACK ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
                     r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral", timeout=8)
                     if r.status_code == 200 and "IMPORTANT NOTICE" not in r.text:
-                        answer = "⚠️ *Vision System Busy:* \n\n" + r.text
+                        answer = r.text
                         success = True
                 except: pass
 
             if not success:
-                answer = "🔱 **Neural Sync Timeout.** Please click 'Wipe Neural Core' and refresh."
+                answer = "🔱 **Neural Sync Timeout.** Please try again in 10 seconds."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
