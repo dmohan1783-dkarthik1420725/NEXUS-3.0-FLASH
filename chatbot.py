@@ -1,37 +1,66 @@
-# --- 📸 MULTIMEDIA INPUT AREA (Gemini Style) ---
+import streamlit as st
+from google import genai
+import requests
+import urllib.parse
+from datetime import datetime
+import pytz
+from streamlit_option_menu import option_menu
+
+# --- 1. CONFIGURATION & IDENTITY ---
+st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
+CREATOR = "Dumpala Karthik"
+
+# 🌍 GLOBAL TIME SYNC (IST)
+ist = pytz.timezone('Asia/Kolkata')
+def get_now_full():
+    return datetime.now(ist).strftime("%A, %d %B %Y")
+
+def get_now_time():
+    return datetime.now(ist).strftime("%I:%M %p")
+
+# IDENTITY CHIP
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Current time is {get_now_time()}."
+
+# --- 🧠 NEURAL MEMORY INITIALIZATION ---
+if "neural_logs" not in st.session_state:
+    st.session_state.neural_logs = []
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+def add_to_memory(m_type, content):
+    ts = datetime.now(ist).strftime("%H:%M:%S")
+    log_entry = {"time": ts, "type": m_type, "text": content}
+    st.session_state.neural_logs.insert(0, log_entry)
+
+# --- 🔑 KEY RETRIEVAL ---
+p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
+
+# --- 🧠 GEMINI INITIALIZATION ---
+client = None
+gemini_online = False
+if "GOOGLE_API_KEY" in st.secrets:
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+        gemini_online = True
+    except Exception:
+        gemini_online = False
+
+# --- 2. SIDEBAR ---
+with st.sidebar:
+    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    
+    # 🕒 SIDEBAR CLOCK WIDGET
     st.markdown("---")
-    multi_cols = st.columns([1, 1, 1, 1, 6]) 
-    
-    with multi_cols[0]:
-        cam_pop = st.popover("📷")
-        cam_file = cam_pop.camera_input("Capture Vision")
-    
-    with multi_cols[1]:
-        gal_pop = st.popover("🖼️")
-        gal_file = gal_pop.file_uploader("Gallery", type=['png', 'jpg', 'jpeg'])
+    st.markdown(f"""
+        <div style="background-color: rgba(255, 140, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
+            <p style="margin:0; font-size: 13px; color: #FF8C00; font-weight: bold;">📅 {get_now_full()}</p>
+            <p style="margin:5px 0 0 0; font-size: 26px; color: white; font-weight: 800;">{get_now_time()}</p>
+            <p style="margin:0; font-size: 10px; color: #888;">SYSTEM TIME (IST)</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.markdown("---")
 
-    with multi_cols[2]:
-        file_pop = st.popover("📁")
-        # Change 'uploaded_file' to 'doc_file' to avoid confusion
-        doc_file = file_pop.file_uploader("Upload Files", type=['pdf', 'txt', 'docx'])
-
-    with multi_cols[3]:
-        if st.button("🎤"):
-            st.toast("Voice synthesis initializing...")
-
-    # --- 🛠️ THE FIX: Checking the variables correctly ---
-    # We combine them so VEDA knows if ANY file was uploaded
-    active_visual = cam_file or gal_file
-    
-    if active_visual:
-        st.image(active_visual, caption="Visual Data Detected", width=200)
-
-    if doc_file:
-        st.success(f"📄 Document Attached: {doc_file.name}")
-
-    # 📥 MAIN CHAT INPUT
-    if prompt := st.chat_input("Command VEDA..."):
-        add_to_memory("MEDHA", prompt)
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        
-        # [Rest of your chat logic follows...]
+    # 🧠 NEURAL LOGS
+    st.markdown("### 🧠 NEURAL LOGS")
+    if st.session_state.neural_logs:
