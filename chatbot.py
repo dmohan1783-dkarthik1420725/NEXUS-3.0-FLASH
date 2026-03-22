@@ -76,7 +76,8 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             answer = ""
             success = False
-            # 🔄 BRAIN ROTATION 1: GEMINI
+            
+            # --- PRIMARY: GEMINI ---
             if client:
                 try:
                     res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n\nUser: {prompt}")
@@ -84,7 +85,7 @@ if selected == "Medha (Chat)":
                     success = True
                 except: st.caption("🔄 Rotating...")
 
-            # 🔄 BRAIN ROTATION 2: POLLINATIONS
+            # --- BACKUP: POLLINATIONS ---
             if not success:
                 try:
                     q = urllib.parse.quote(prompt)
@@ -95,5 +96,32 @@ if selected == "Medha (Chat)":
                     answer = r.text
                 except: answer = "System Offline."
 
-            st.markdown(answer)
-            st
+            # ✨ CLEANING LOGIC ✨
+            # We strip any accidental Streamlit object mentions to stop the "Help" wall
+            final_response = str(answer).split("stmodulestreamlit")[0].strip()
+            
+            st.markdown(final_response)
+            st.session_state.chat_history.append({"role": "assistant", "content": final_response})
+
+# [TAB 2: SRIJAN ARCHITECT]
+elif selected == "Srijan (Images)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    
+    vision = st.text_input("Vision:", placeholder="Describe your image...")
+    if st.button("🚀 RENDER"):
+        if vision:
+            add_to_memory("SRIJAN", vision)
+            with st.spinner("Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(vision)
+                    img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
+                    st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
+                    st.balloons()
+                except: st.error("Architect Busy.")
+
+# [TAB 3: VEDA HUB]
+elif selected == "Veda (Hub)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">VEDA NETWORK HUB</div>', unsafe_allow_html=True)
+    st.write(f"Architect: {CREATOR}")
