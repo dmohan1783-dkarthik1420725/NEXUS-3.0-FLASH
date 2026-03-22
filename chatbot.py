@@ -16,7 +16,6 @@ def get_now_full():
 def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
-# IDENTITY CHIP
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY ---
@@ -70,7 +69,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- ➕ ACTION BAR (Left Lower Side) ---
+    # --- ➕ ACTION BAR ---
     st.markdown("---")
     act_col1, act_col2 = st.columns([1, 12])
     with act_col1:
@@ -93,32 +92,32 @@ if selected == "Medha (Chat)":
             success = False
             
             if client:
-                # 🛠️ 3.1 OPTIMIZATION: Thinking level set to minimal for speed
+                # 🛠️ 3.1 OPTIMIZATION: List of all 3.1/3.0 variations for redundancy
+                # We try "Pro", then "Flash", then "Flash-Lite", then the stable "Flash"
+                target_models = [
+                    "gemini-3.1-pro-preview", 
+                    "gemini-3.1-flash-lite-preview", 
+                    "gemini-3-flash-preview",
+                    "gemini-1.5-flash" # The ultimate stability fallback
+                ]
+                
                 config = {"thinking_level": "minimal", "temperature": 0.8}
                 
-                # Try 3.1 Pro Preview
-                try:
-                    res = client.models.generate_content(
-                        model="gemini-3.1-pro-preview",
-                        contents=[f"{IDENTITY}\nTask: Describe this: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
-                        config=config
-                    )
-                    answer = res.text
-                    success = True
-                except:
-                    # Try 3.1 Flash Lite Preview (Fastest backup)
+                for model_choice in target_models:
                     try:
                         res = client.models.generate_content(
-                            model="gemini-3.1-flash-lite-preview",
-                            contents=[f"{IDENTITY}\nAnalyze: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
-                            config=config
+                            model=model_choice,
+                            contents=[f"{IDENTITY}\nTask: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
+                            config=config if "3.1" in model_choice else None
                         )
                         answer = res.text
                         success = True
-                    except: pass 
+                        break # Stop as soon as one works!
+                    except:
+                        continue
 
             if not success:
-                answer = "🔱 **3.1 Sync Interrupted.** The high-speed links are currently full. Please try again in a few moments."
+                answer = "🔱 **All 3.1 links are at maximum capacity.** Please wait 30 seconds for the neural net to reset."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -136,5 +135,4 @@ elif selected == "Srijan (Images)":
                     v_enc = urllib.parse.quote(vision)
                     img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img, use_column_width=True)
-                    st.balloons()
                 except: st.error("Architect Busy.")
