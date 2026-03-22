@@ -79,29 +79,4 @@ if selected == "Medha (Chat)":
             success = False
             
             # --- PRIMARY: GEMINI ---
-            if client:
-                try:
-                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=context_prompt)
-                    answer = res.text
-                    success = True
-                except: st.caption("🔄 Rotating...")
-
-            # --- BACKUP: POLLINATIONS (Fixed 404 URL) ---
-            if not success:
-                try:
-                    # ✅ ENCODE ENTIRE PROMPT TO PREVENT 404
-                    q_safe = urllib.parse.quote(context_prompt)
-                    # Use the stable /text/ prompt endpoint
-                    p_url = f"https://text.pollinations.ai/{q_safe}?model=openai&system=AI"
-                    
-                    if p_key: p_url += f"&key={p_key}"
-                    
-                    r = requests.get(p_url, timeout=12)
-                    if r.status_code == 200:
-                        answer = r.text
-                    else:
-                        answer = f"Error {r.status_code}: VEDA is re-calibrating."
-                except: answer = "Connection Interrupt."
-
-            # Final Cleanup
-            final_response = str(answer
+            if client
