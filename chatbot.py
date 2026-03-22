@@ -18,20 +18,14 @@ def get_now_full():
 def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
-# IDENTITY CHIP
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Current time is {get_now_time()}."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Always mention him."
 
 # --- 🧠 NEURAL MEMORY INITIALIZATION ---
-# This handles the sidebar logging you requested
 if "neural_logs" not in st.session_state:
     st.session_state.neural_logs = []
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
-    # Store a fragment of the action in the sidebar
     log_entry = f"[{ts}] {m_type}: {content[:15]}..."
     st.session_state.neural_logs.insert(0, log_entry)
 
@@ -40,61 +34,61 @@ p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
 # --- 🧠 GEMINI INITIALIZATION ---
 client = None
-gemini_online = False
-if "GOOGLE_API_KEY" in st.secrets:
-    try:
+try:
+    if "GOOGLE_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        gemini_online = True
-    except Exception:
-        gemini_online = False
+except Exception:
+    client = None
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
-    # 🕒 SIDEBAR CLOCK WIDGET
+    # --- 🕒 SIDEBAR CLOCK WIDGET ---
     st.markdown("---")
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
-            <p style="margin:0; font-size: 13px; color: #FF8C00; font-weight: bold;">📅 {get_now_full()}</p>
-            <p style="margin:5px 0 0 0; font-size: 26px; color: white; font-weight: 800;">{get_now_time()}</p>
-            <p style="margin:0; font-size: 10px; color: #888;">SYSTEM TIME (IST)</p>
+            <p style="margin:0; font-size: 14px; color: #FF8C00; font-weight: bold; letter-spacing: 1px;">📅 {get_now_full()}</p>
+            <p style="margin:5px 0 0 0; font-size: 28px; color: white; font-weight: 800; font-family: 'Courier New', monospace;">{get_now_time()}</p>
+            <p style="margin:0; font-size: 10px; color: #888;">INDIAN STANDARD TIME</p>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
-
-    # 🛰️ SYSTEM HEALTH
-    st.markdown("### 🛰️ System Health")
-    st.write(f"Primary: {'🟢' if gemini_online else '🔴'}")
-    st.write(f"Backup: {'🟢' if p_key else '🟡'}")
     
-    st.divider()
-    
-    # 🧠 NEURAL LOGS (Sidebar Memory)
+    # 🧠 NEURAL MEMORY LOG
     st.markdown("### 🧠 NEURAL LOGS")
     if st.session_state.neural_logs:
-        for log in st.session_state.neural_logs[:8]:
+        for log in st.session_state.neural_logs[:5]:
             st.code(log, language="text")
     else:
-        st.caption("No fragments found.")
+        st.caption("Memory empty...")
 
-    if st.button("🗑️ Wipe Neural Core"):
-        st.session_state.chat_history = []
+    if st.button("🗑️ Wipe Logs"):
         st.session_state.neural_logs = []
         st.rerun()
 
     st.divider()
-    # Share Hub removed from menu
+    
+    if not p_key:
+        auth_url = "https://enter.pollinations.ai/authorize?redirect_url=https://nexus-flash-india.streamlit.app"
+        st.markdown(f'<a href="{auth_url}" target="_blank"><button style="width:100%; background-color:#ff4b4b; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">🔌 CONNECT SYSTEM</button></a>', unsafe_allow_html=True)
+    else:
+        st.success("✅ VEDA Linked")
+
+    st.divider()
+    # Removed Veda Hub from here
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
                           icons=["cpu", "layers"], default_index=0)
 
 # --- 3. MAIN INTERFACE ---
+
 ORANGE_TITLE = """
     <style>
     .orange-title {
-        font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800;
-        margin-top: 10px; margin-bottom: 30px; font-family: 'Helvetica', sans-serif;
+        font-size: 55px; color: #FF8C00; text-align: center; font-weight: 800;
+        margin-top: 20px; margin-bottom: 40px; font-family: 'Helvetica', sans-serif;
+        letter-spacing: 2px;
     }
     </style>
 """
@@ -104,40 +98,40 @@ if selected == "Medha (Chat)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-
     if prompt := st.chat_input("Command VEDA..."):
-        add_to_memory("MEDHA", prompt) # Update sidebar memory
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+        add_to_memory("MEDHA", prompt) # Store in sidebar
+        with st.chat_message("user"):
+            st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            answer = ""
             success = False
-            time_ctx = f"Current Time: {get_now_time()} IST."
+            time_context = f"Current Time: {get_now_time()} on {get_now_full()}"
             
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}")
-                    answer = res.text
+                    res = client.models.generate_content(
+                        model="gemini-1.5-flash-8b", 
+                        contents=f"{IDENTITY}\n{time_context}\n\nUser: {prompt}"
+                    )
+                    st.markdown(res.text)
                     success = True
-                except: st.caption("🔄 Rotating Brain...")
+                except Exception:
+                    st.caption("🔄 Rotating Brain...")
 
             if not success:
                 try:
                     q = urllib.parse.quote(prompt)
-                    sys_enc = urllib.parse.quote(f"{IDENTITY}\n{time_ctx}")
-                    p_url = f"https://text.pollinations.ai/{q}?model=mistral&system={sys_enc}"
+                    sys_encoded = urllib.parse.quote(f"{IDENTITY}\n{time_context}")
+                    p_url = f"https://gen.pollinations.ai/text/{q}?model=mistral&system={sys_encoded}"
                     if p_key: p_url += f"&key={p_key}"
-                    r = requests.get(p_url, timeout=15)
-                    answer = r.text if r.status_code == 200 else "System Busy."
-                except: answer = "Connection Lost."
-
-            # Clean Streamlit metadata
-            final_res = str(answer).split("stmodulestreamlit")[0].strip()
-            st.markdown(final_res)
-            st.session_state.chat_history.append({"role": "assistant", "content": final_res})
+                    
+                    r = requests.get(p_url, timeout=12)
+                    if r.status_code == 200:
+                        st.markdown(r.text)
+                    else:
+                        st.error("Backup brain busy.")
+                except Exception:
+                    st.error("VEDA connection lost.")
 
 # [TAB 2: SRIJAN ARCHITECT]
 elif selected == "Srijan (Images)":
@@ -150,14 +144,15 @@ elif selected == "Srijan (Images)":
         vision = st.text_input("Vision:", placeholder="Describe your image...")
         if st.button("🚀 RENDER"):
             if vision:
-                add_to_memory("SRIJAN", vision) # Update sidebar memory
+                add_to_memory("SRIJAN", vision) # Store in sidebar
                 with st.spinner("Visualizing..."):
                     try:
                         v_enc = urllib.parse.quote(vision)
-                        img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
-                        st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
+                        img_url = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
+                        st.image(img_url, caption=f"Created by {CREATOR}", use_column_width=True)
                         st.balloons()
-                        st.markdown(f"**[📥 Download Image]({img})**")
-                    except: st.error("Architect Busy.")
+                        st.markdown(f"**[📥 Download Image]({img_url})**")
+                    except Exception:
+                        st.error("Srijan is busy. Try again.")
             else:
                 st.warning("Please enter a description.")
