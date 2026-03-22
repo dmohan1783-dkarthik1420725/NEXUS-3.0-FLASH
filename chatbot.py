@@ -15,6 +15,7 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
+# IDENTITY CHIP
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY ---
@@ -89,8 +90,13 @@ if selected == "Medha (Chat)":
             answer = ""
             success = False
             
+            # 🛠️ IMAGE PRE-PROCESSING (The Byte Buffer Fix)
+            final_visual = None
+            if active_visual:
+                final_visual = {"mime_type": active_visual.type, "data": active_visual.getvalue()}
+            
             if client:
-                # 🚀 VISION-FIRST PIPELINE: Use 2.0 Flash for Images (Less likely to timeout)
+                # 🚀 SMART PIPELINE
                 if active_visual:
                     model_pipeline = ["gemini-2.0-flash", "gemini-3.1-pro-preview", "gemini-1.5-flash"]
                 else:
@@ -98,12 +104,11 @@ if selected == "Medha (Chat)":
                 
                 for model_choice in model_pipeline:
                     try:
-                        # 3.1 logic often hits high thinking latency, we try to minimize it
                         cfg = {"thinking_level": "minimal"} if "3.1" in model_choice else None
                         
                         res = client.models.generate_content(
                             model=model_choice,
-                            contents=[f"{IDENTITY}\nRead/Analyze: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
+                            contents=[f"{IDENTITY}\nAnalyze/Read: {prompt}", final_visual] if final_visual else f"{IDENTITY}\n{prompt}",
                             config=cfg
                         )
                         answer = res.text
@@ -113,18 +118,18 @@ if selected == "Medha (Chat)":
                     except:
                         continue 
 
-            # --- FINAL FALLBACK (If Google is totally congested) ---
+            # --- FINAL FALLBACK ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
                     r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral", timeout=8)
                     if r.status_code == 200 and "IMPORTANT NOTICE" not in r.text:
-                        answer = "⚠️ *Vision System Busy (Text Analysis Only):*\n\n" + r.text
+                        answer = "⚠️ *Vision System Busy:* \n\n" + r.text
                         success = True
                 except: pass
 
             if not success:
-                answer = "🔱 **Neural Sync Timeout.** The links are currently heavy. Please click 'Wipe Neural Core' and try again."
+                answer = "🔱 **Neural Sync Timeout.** Please click 'Wipe Neural Core' and refresh."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -141,69 +146,4 @@ elif selected == "Srijan (Images)":
                     v_enc = urllib.parse.quote(vision)
                     img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img, use_column_width=True)
-                except: st.error("Architect Busy.")# --- ➕ ACTION BAR ---
-act_col1, act_col2 = st.columns([1, 12])
-with act_col1:
-    plus_menu = st.popover("➕", use_container_width=True)
-    cam_file = plus_menu.camera_input("📷 Camera")
-    gal_file = plus_menu.file_uploader("🖼️ Gallery", type=['png', 'jpg', 'jpeg'])
-
-active_visual = cam_file or gal_file
-if active_visual: st.image(active_visual, width=150)
-
-# 📥 MAIN CHAT INPUT
-if prompt := st.chat_input("Command VEDA..."):
-    st.session_state.chat_history.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
-    
-    with st.chat_message("assistant"):
-        answer = ""
-        success = False
-        
-        # --- 🚀 ENGINE 1: GEMINI PIPELINE (3.1 -> 2.0 -> 1.5) ---
-        if client:
-            model_pipeline = ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview", "gemini-2.0-flash", "gemini-1.5-flash"]
-            for model_choice in model_pipeline:
-                try:
-                    # Give each 3.1 model 2 attempts with a tiny delay
-                    for attempt in range(2):
-                        try:
-                            config = {"thinking_level": "minimal"} if "3.1" in model_choice else None
-                            res = client.models.generate_content(
-                                model=model_choice,
-                                contents=[f"{IDENTITY}\nAnalyze: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
-                                config=config
-                            )
-                            answer = res.text
-                            success = True
-                            break
-                        except:
-                            time.sleep(1) 
-                    if success: break
-                except: continue
-
-        # --- 🛡️ ENGINE 2: MISTRAL (Silent Backup) ---
-        if not success or "IMPORTANT NOTICE" in answer:
-            try:
-                q_enc = urllib.parse.quote(prompt)
-                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral", timeout=10)
-                # Check if it's a real answer or the deprecation notice
-                if r.status_code == 200 and "IMPORTANT NOTICE" not in r.text:
-                    answer = r.text
-                    success = True
-            except: pass
-
-        # --- 🛡️ ENGINE 3: LLAMA (Final Fail-Safe) ---
-        if not success or "IMPORTANT NOTICE" in answer:
-            try:
-                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=llama", timeout=10)
-                if r.status_code == 200 and "IMPORTANT NOTICE" not in r.text:
-                    answer = r.text
-                    success = True
-            except: pass
-
-        if not success or "IMPORTANT NOTICE" in answer:
-            answer = "🔱 **Neural Synchronizing.** The 3.1 links are currently full. Please try your command again in 5 seconds."
-
-        st.markdown(answer)
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                except: st.error("Architect Busy.")
