@@ -19,7 +19,7 @@ def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
 # IDENTITY CHIP
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Always mention him."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY ---
 if "neural_logs" not in st.session_state:
@@ -104,30 +104,38 @@ if selected == "Medha (Chat)":
             sys_msg = f"You are VEDA 3.0 ULTRA by {CREATOR}. {time_ctx}"
             sys_enc = urllib.parse.quote(sys_msg)
 
-            # --- ENGINE 1: GEMINI ---
+            # --- ENGINE 1: GEMINI (Silent) ---
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=[f"{sys_msg}\n{prompt}", active_visual] if active_visual else f"{sys_msg}\n{prompt}")
+                    res = client.models.generate_content(
+                        model="gemini-1.5-flash-8b", 
+                        contents=[f"{sys_msg}\n{prompt}", active_visual] if active_visual else f"{sys_msg}\n{prompt}"
+                    )
                     answer = res.text
                     success = True
-                except: st.caption("🔄 Rotating to Mistral...")
+                except: pass # Move to next engine silently
 
-            # --- ENGINE 2: MISTRAL ---
+            # --- ENGINE 2: MISTRAL (Silent) ---
             if not success:
                 try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_enc}", timeout=10)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_enc}", timeout=8)
                     if r.status_code == 200 and "System Overload" not in r.text:
                         answer = r.text
                         success = True
-                    else: st.caption("🔄 Rotating to Llama...")
                 except: pass
 
-            # --- ENGINE 3: LLAMA (Ultimate Fail-Safe) ---
+            # --- ENGINE 3: LLAMA (Silent) ---
             if not success:
                 try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=llama&system={sys_enc}", timeout=10)
-                    answer = r.text if r.status_code == 200 else "⚠️ All engines busy. Try in 5s."
-                except: answer = "Connection Offline."
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=llama&system={sys_enc}", timeout=8)
+                    if r.status_code == 200 and "System Overload" not in r.text:
+                        answer = r.text
+                        success = True
+                except: pass
+
+            # Final check if all failed
+            if not success:
+                answer = "🔱 Connection lines are heavy. Please try again in a few moments."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
