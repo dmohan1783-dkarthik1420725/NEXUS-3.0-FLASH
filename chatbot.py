@@ -18,7 +18,7 @@ def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
 # IDENTITY CHIP
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Current time is {get_now_time()}."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY INITIALIZATION ---
 if "neural_logs" not in st.session_state:
@@ -28,17 +28,11 @@ if "chat_history" not in st.session_state:
 
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
-    log_entry = {"time": ts, "type": m_type, "text": content}
-    st.session_state.neural_logs.insert(0, log_entry)
+    st.session_state.neural_logs.insert(0, {"time": ts, "type": m_type, "text": content})
 
-# --- 3. THE HEART: INITIALIZATION & STATUS ---
+# --- 3. THE HEART: INITIALIZATION ---
 client = None
 api_status = "🔴 Offline"
-
-# STABILITY UPDATE: Using 2.0 Flash as Primary for better Vision/Speed
-PRIMARY_MODEL = "gemini-2.0-flash" 
-SECONDARY_MODEL = "gemini-3.1-pro-preview"
-
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -50,17 +44,13 @@ if "GOOGLE_API_KEY" in st.secrets:
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
-    
     st.info(f"🛰️ System: {api_status}")
     st.markdown(f"📅 **{get_now_full()}**\n\n🕒 **{get_now_time()} IST**")
     
     st.divider()
     st.markdown("### 🧠 NEURAL LOGS")
-    if st.session_state.neural_logs:
-        for log in st.session_state.neural_logs[:5]:
-            st.code(f"{log['time']} | {log['text'][:15]}...", language="text")
-    else:
-        st.caption("Neural fragments offline.")
+    for log in st.session_state.neural_logs[:5]:
+        st.code(f"{log['time']} | {log['text'][:15]}...", language="text")
 
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
@@ -68,16 +58,10 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
-                          icons=["cpu", "layers"], default_index=0)
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
 
 # --- 5. MAIN INTERFACE ---
-ORANGE_TITLE = """
-    <style>
-    .orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}
-    .stPopover { margin-top: 23px; }
-    </style>
-"""
+ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}.stPopover { margin-top: 23px; }</style>"
 
 if selected == "Medha (Chat)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
@@ -86,7 +70,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- ➕ FLOATING ACTION BAR ---
+    # --- ➕ ACTION BAR (Left Lower Side) ---
     st.markdown("---")
     act_col1, act_col2 = st.columns([1, 12])
     with act_col1:
@@ -108,50 +92,40 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             answer = ""
             success = False
-            q_enc = urllib.parse.quote(prompt)
-            # Inject identity and time into the system prompt
-            sys_msg = f"{IDENTITY}\n\nUser: {prompt}"
-
-            # --- ENGINE 1: GEMINI 2.0 FLASH (Fast Vision) ---
+            time_ctx = f"Time: {get_now_time()} IST."
+            
+            # --- ENGINE 1: GEMINI 2.0 FLASH (Silent) ---
             if client:
                 try:
-                    res = client.models.generate_content(
-                        model=PRIMARY_MODEL,
-                        contents=[sys_msg, active_visual] if active_visual else sys_msg
-                    )
+                    vision_content = [f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}"
+                    res = client.models.generate_content(model="gemini-2.0-flash", contents=vision_content)
                     answer = res.text
                     success = True
-                except:
-                    # Silent Fallback to 3.1 Pro (Experimental)
-                    try:
-                        res = client.models.generate_content(
-                            model=SECONDARY_MODEL,
-                            contents=[sys_msg, active_visual] if active_visual else sys_msg
-                        )
-                        answer = res.text
-                        success = True
-                    except: pass
+                except: pass
 
-            # --- ENGINE 2: MISTRAL (Backup) ---
+            # --- ENGINE 2: MISTRAL (Text Fallback) ---
             if not success:
                 try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={urllib.parse.quote(IDENTITY)}", timeout=10)
-                    if r.status_code == 200 and "Overload" not in r.text:
-                        answer = r.text
+                    q_enc = urllib.parse.quote(f"Vision busy. Answer as VEDA: {prompt}")
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={urllib.parse.quote(IDENTITY)}", timeout=7)
+                    if r.status_code == 200:
+                        prefix = "⚠️ *Vision Engine Busy (Text Analysis):*\n\n" if active_visual else ""
+                        answer = prefix + r.text
                         success = True
                 except: pass
 
-            # --- ENGINE 3: LLAMA (Final Fail-Safe) ---
+            # --- ENGINE 3: LLAMA ---
             if not success:
                 try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=llama&system={urllib.parse.quote(IDENTITY)}", timeout=10)
+                    q_enc = urllib.parse.quote(prompt)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=llama&system={urllib.parse.quote(IDENTITY)}", timeout=7)
                     if r.status_code == 200:
                         answer = r.text
                         success = True
                 except: pass
 
             if not success:
-                answer = "🔱 Neural links are heavy. Please verify your connection or try again in 10s."
+                answer = "🔱 Connection lines are heavy. Please try again in 10s."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -159,4 +133,15 @@ if selected == "Medha (Chat)":
 elif selected == "Srijan (Images)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    # [Srijan logic follows...]
+    
+    vision = st.text_input("Vision:", placeholder="Describe your image...")
+    if st.button("🚀 RENDER"):
+        if vision:
+            add_to_memory("SRIJAN", vision)
+            with st.spinner("Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(vision)
+                    img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
+                    st.balloons()
+                except: st.error("Architect Busy.")
