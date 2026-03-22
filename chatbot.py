@@ -16,6 +16,7 @@ def get_now_full():
 def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
+# IDENTITY CHIP
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 2. NEURAL MEMORY ---
@@ -28,14 +29,14 @@ def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
     st.session_state.neural_logs.insert(0, {"time": ts, "type": m_type, "text": content})
 
-# --- 3. INITIALIZATION (STRICT 3.1) ---
+# --- 3. INITIALIZATION ---
 client = None
 api_status = "🔴 Offline"
 
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        api_status = "🟢 Ready (Gemini 3.1)"
+        api_status = "🟢 Ready (Smart Router)"
     except Exception as e:
         api_status = f"❌ Error: {str(e)[:20]}"
 
@@ -44,7 +45,7 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     st.info(f"🛰️ System: {api_status}")
-    st.markdown(f"📅 **{get_now_full()}**\n\n🕒 **{get_now_time()} IST**")
+    st.markdown(f"📅 **{get_now_full()}**\n🕒 **{get_now_time()} IST**")
     
     st.divider()
     st.markdown("### 🧠 NEURAL LOGS")
@@ -69,7 +70,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- ➕ ACTION BAR ---
+    # --- ➕ ACTION BAR (Lower Left) ---
     st.markdown("---")
     act_col1, act_col2 = st.columns([1, 12])
     with act_col1:
@@ -92,32 +93,39 @@ if selected == "Medha (Chat)":
             success = False
             
             if client:
-                # 🛠️ 3.1 OPTIMIZATION: List of all 3.1/3.0 variations for redundancy
-                # We try "Pro", then "Flash", then "Flash-Lite", then the stable "Flash"
-                target_models = [
+                # 🚀 SMART PIPELINE: Tries 3.1 Pro first, then cascades to stable models if busy
+                model_pipeline = [
                     "gemini-3.1-pro-preview", 
-                    "gemini-3.1-flash-lite-preview", 
-                    "gemini-3-flash-preview",
-                    "gemini-1.5-flash" # The ultimate stability fallback
+                    "gemini-3.1-flash-lite-preview",
+                    "gemini-2.0-flash",       # Stable Vision Backup
+                    "gemini-1.5-flash"        # Ultimate Stability
                 ]
                 
-                config = {"thinking_level": "minimal", "temperature": 0.8}
-                
-                for model_choice in target_models:
+                for model_choice in model_pipeline:
                     try:
+                        # Only apply 3.1 thinking config to the 3.1 models
+                        config = {"thinking_level": "minimal"} if "3.1" in model_choice else None
+                        
                         res = client.models.generate_content(
                             model=model_choice,
-                            contents=[f"{IDENTITY}\nTask: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
-                            config=config if "3.1" in model_choice else None
+                            contents=[f"{IDENTITY}\nAnalyze this: {prompt}", active_visual] if active_visual else f"{IDENTITY}\n{prompt}",
+                            config=config
                         )
                         answer = res.text
                         success = True
-                        break # Stop as soon as one works!
+                        break # Stop loop as soon as one works
                     except:
-                        continue
+                        continue 
 
             if not success:
-                answer = "🔱 **All 3.1 links are at maximum capacity.** Please wait 30 seconds for the neural net to reset."
+                # Emergency Text-Only Fallback
+                try:
+                    q_enc = urllib.parse.quote(prompt)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral", timeout=5)
+                    answer = "⚠️ *Vision System Busy:* \n\n" + r.text
+                    success = True
+                except:
+                    answer = "🔱 **Neural Core Resetting.** Please retry in 10 seconds."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
