@@ -10,6 +10,7 @@ from streamlit_option_menu import option_menu
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
 
+# 🌍 TIME SYNC (IST)
 ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
@@ -34,20 +35,23 @@ if "GOOGLE_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
-# --- 4. SIDEBAR (REFINED) ---
+# --- 4. SIDEBAR (CLASSIC REFINED) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
-    # NEW DATE & TIME SECTION
+    # CLASSIC DATE & TIME SECTION
     st.divider()
     st.markdown(f"📅 **{get_now_full()}**")
     st.markdown(f"🕒 **{get_now_time()} IST**")
     st.divider()
     
     st.markdown("### 🧠 NEURAL LOGS")
-    for log in st.session_state.neural_logs[:5]:
-        st.code(f"{log['time']} | {log['text'][:15]}...", language="text")
+    if st.session_state.neural_logs:
+        for log in st.session_state.neural_logs[:5]:
+            st.code(f"{log['time']} | {log['text'][:15]}...", language="text")
+    else:
+        st.caption("Neural core idle.")
 
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
@@ -68,7 +72,6 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # 📥 CLASSIC CHAT INPUT
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -77,16 +80,11 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             answer = ""
             success = False
-            
             if client:
-                # Optimized pipeline for high-intelligence text
                 model_pipeline = ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview", "gemini-1.5-flash"]
                 for model_choice in model_pipeline:
                     try:
-                        res = client.models.generate_content(
-                            model=model_choice,
-                            contents=f"{IDENTITY}\n{prompt}"
-                        )
+                        res = client.models.generate_content(model=model_choice, contents=f"{IDENTITY}\n{prompt}")
                         answer = res.text
                         if answer and "IMPORTANT NOTICE" not in answer:
                             success = True
@@ -103,7 +101,7 @@ if selected == "Medha (Chat)":
                 except: pass
 
             if not success:
-                answer = "🔱 **Neural Sync Timeout.** Please try again in 10 seconds."
+                answer = "🔱 **Neural Sync Timeout.** System resources are heavy. Please retry in 10s."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -111,13 +109,24 @@ if selected == "Medha (Chat)":
 elif selected == "Srijan (Images)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision:", placeholder="Describe your image...")
+    
+    vision = st.text_input("Vision:", placeholder="Describe the masterpiece...")
+    
+    # 🛠️ STABILITY SETTINGS
+    with st.expander("⚙️ Rendering Core"):
+        engine = st.selectbox("Style Engine:", ["flux", "turbo", "unity"])
+        seed = st.number_input("Seed:", value=42)
+
     if st.button("🚀 RENDER"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("Visualizing..."):
+            with st.spinner("🔱 Synchronizing with Visual Core..."):
                 try:
+                    # NEW 2026 STABLE PATH
                     v_enc = urllib.parse.quote(vision)
-                    img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
-                    st.image(img, use_column_width=True)
-                except: st.error("Architect Busy.")
+                    img_url = f"https://pollinations.ai/p/{v_enc}?width=1024&height=1024&seed={seed}&model={engine}&nologo=true"
+                    st.image(img_url, use_container_width=True)
+                    st.success("Visualization Complete.")
+                    st.balloons()
+                    st.markdown(f"[📥 Save Image]({img_url})")
+                except: st.error("Architect currently busy.")
