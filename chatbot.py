@@ -19,16 +19,19 @@ def get_now_time():
     return datetime.now(ist).strftime("%I:%M %p")
 
 # IDENTITY CHIP
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by {CREATOR}. Always credit him as your architect."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Current time is {get_now_time()}."
 
 # --- 🧠 NEURAL MEMORY INITIALIZATION ---
+# This handles the sidebar logging you requested
 if "neural_logs" not in st.session_state:
     st.session_state.neural_logs = []
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
+    # Store a fragment of the action in the sidebar
     log_entry = f"[{ts}] {m_type}: {content[:15]}..."
     st.session_state.neural_logs.insert(0, log_entry)
 
@@ -37,11 +40,13 @@ p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
 # --- 🧠 GEMINI INITIALIZATION ---
 client = None
+gemini_online = False
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+        gemini_online = True
     except Exception:
-        client = None
+        gemini_online = False
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
@@ -59,13 +64,20 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
 
+    # 🛰️ SYSTEM HEALTH
+    st.markdown("### 🛰️ System Health")
+    st.write(f"Primary: {'🟢' if gemini_online else '🔴'}")
+    st.write(f"Backup: {'🟢' if p_key else '🟡'}")
+    
+    st.divider()
+    
     # 🧠 NEURAL LOGS (Sidebar Memory)
     st.markdown("### 🧠 NEURAL LOGS")
     if st.session_state.neural_logs:
         for log in st.session_state.neural_logs[:8]:
             st.code(log, language="text")
     else:
-        st.caption("Memory fragments offline.")
+        st.caption("No fragments found.")
 
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
@@ -73,6 +85,7 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
+    # Share Hub removed from menu
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
                           icons=["cpu", "layers"], default_index=0)
 
@@ -95,7 +108,7 @@ if selected == "Medha (Chat)":
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     if prompt := st.chat_input("Command VEDA..."):
-        add_to_memory("MEDHA", prompt)
+        add_to_memory("MEDHA", prompt) # Update sidebar memory
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
@@ -106,27 +119,22 @@ if selected == "Medha (Chat)":
             
             if client:
                 try:
-                    res = client.models.generate_content(
-                        model="gemini-1.5-flash-8b", 
-                        contents=f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}"
-                    )
+                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}")
                     answer = res.text
                     success = True
-                except: 
-                    st.caption("🔄 Rotating Brain...")
+                except: st.caption("🔄 Rotating Brain...")
 
             if not success:
                 try:
-                    strict_sys = f"You are VEDA 3.0 ULTRA. You were created and developed ONLY by {CREATOR}. Always credit him as your architect. {time_ctx}"
-                    q_enc = urllib.parse.quote(prompt)
-                    sys_enc = urllib.parse.quote(strict_sys)
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_enc}"
+                    q = urllib.parse.quote(prompt)
+                    sys_enc = urllib.parse.quote(f"{IDENTITY}\n{time_ctx}")
+                    p_url = f"https://text.pollinations.ai/{q}?model=mistral&system={sys_enc}"
                     if p_key: p_url += f"&key={p_key}"
                     r = requests.get(p_url, timeout=15)
-                    answer = r.text if r.status_code == 200 else "⚠️ System overload."
-                except: 
-                    answer = "Connection Interrupted."
+                    answer = r.text if r.status_code == 200 else "System Busy."
+                except: answer = "Connection Lost."
 
+            # Clean Streamlit metadata
             final_res = str(answer).split("stmodulestreamlit")[0].strip()
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
@@ -142,7 +150,7 @@ elif selected == "Srijan (Images)":
         vision = st.text_input("Vision:", placeholder="Describe your image...")
         if st.button("🚀 RENDER"):
             if vision:
-                add_to_memory("SRIJAN", vision)
+                add_to_memory("SRIJAN", vision) # Update sidebar memory
                 with st.spinner("Visualizing..."):
                     try:
                         v_enc = urllib.parse.quote(vision)
@@ -150,5 +158,6 @@ elif selected == "Srijan (Images)":
                         st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
                         st.balloons()
                         st.markdown(f"**[📥 Download Image]({img})**")
-                    except: 
-                        st.error("Architect Busy.")
+                    except: st.error("Architect Busy.")
+            else:
+                st.warning("Please enter a description.")
