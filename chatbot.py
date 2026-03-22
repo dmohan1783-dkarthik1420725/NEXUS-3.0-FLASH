@@ -37,20 +37,17 @@ p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
 # --- 4. GEMINI INITIALIZATION ---
 client = None
-gemini_online = False
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        gemini_online = True
     except Exception:
-        gemini_online = False
+        client = None
 
 # --- 5. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
-    # 🕒 SIDEBAR CLOCK WIDGET
     st.markdown("---")
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
@@ -61,7 +58,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
 
-    # 🧠 NEURAL LOGS
     st.markdown("### 🧠 NEURAL LOGS")
     if st.session_state.neural_logs:
         for log in st.session_state.neural_logs[:5]:
@@ -79,72 +75,61 @@ with st.sidebar:
                           icons=["cpu", "layers"], default_index=0)
 
 # --- 6. MAIN INTERFACE ---
-ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}</style>"
+ORANGE_TITLE = """
+    <style>
+    .orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 20px;}
+    /* Align the (+) button popover with the chat input */
+    .stPopover { margin-top: 23px; }
+    </style>
+"""
 
 if selected == "Medha (Chat)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     
-    # Render History
     for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): 
-            st.markdown(msg["content"])
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- 📸 MULTIMEDIA INPUT AREA ---
+    # --- ➕ FLOATING ACTION BAR (Gemini Style) ---
     st.markdown("---")
-    multi_cols = st.columns([1, 1, 1, 1, 6]) 
+    act_col1, act_col2 = st.columns([1, 12])
     
-    with multi_cols[0]:
-        cam_pop = st.popover("📷")
-        cam_file = cam_pop.camera_input("Capture Vision")
-    
-    with multi_cols[1]:
-        gal_pop = st.popover("🖼️")
-        gal_file = gal_pop.file_uploader("Gallery", type=['png', 'jpg', 'jpeg'])
+    with act_col1:
+        plus_menu = st.popover("➕", use_container_width=True)
+        cam_file = plus_menu.camera_input("📷 Camera")
+        gal_file = plus_menu.file_uploader("🖼️ Gallery", type=['png', 'jpg', 'jpeg'])
+        doc_file = plus_menu.file_uploader("📁 Files", type=['pdf', 'txt'])
+        if plus_menu.button("🎤 Voice"):
+            st.toast("Listening...")
 
-    with multi_cols[2]:
-        file_pop = st.popover("📁")
-        doc_file = file_pop.file_uploader("Upload Files", type=['pdf', 'txt', 'docx'])
-
-    with multi_cols[3]:
-        if st.button("🎤"):
-            st.toast("Voice synthesis initializing...")
-
-    # Visual Preview Logic
+    # Logic to handle attachments
     active_visual = cam_file or gal_file
     if active_visual:
-        st.image(active_visual, caption="Visual Data Detected", width=200)
+        st.image(active_visual, caption="📎 Attachment Ready", width=150)
 
     # 📥 MAIN CHAT INPUT
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): 
-            st.markdown(prompt)
+        with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
             answer = ""
             success = False
             time_ctx = f"Current Time: {get_now_time()} IST."
             
-            # --- BRAIN 1: GEMINI (Multi-Modal Support) ---
             if client:
                 try:
-                    sys_msg = f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}"
-                    content_list = [sys_msg]
+                    content_list = [f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}"]
                     if active_visual:
                         content_list.append(active_visual)
                     
-                    res = client.models.generate_content(
-                        model="gemini-1.5-flash-8b", 
-                        contents=content_list
-                    )
+                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=content_list)
                     answer = res.text
                     success = True
                 except Exception: 
                     st.caption("🔄 Rotating Brain...")
 
-            # --- BRAIN 2: BACKUP (Pollinations) ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
