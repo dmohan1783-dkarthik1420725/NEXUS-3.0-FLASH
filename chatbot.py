@@ -14,8 +14,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# IDENTITY CHIP
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Powered by Gemini 3.1 Pro."
+# STRICT IDENTITY: Removed "Powered by Gemini"
+SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. You were created and developed by {CREATOR}. You are a sovereign high-intelligence architect."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -71,9 +71,8 @@ if selected == "Medha (Chat)":
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     # 📥 INPUT AREA
-    prompt = st.chat_input("Command VEDA 3.1 Pro...")
+    prompt = st.chat_input("Command VEDA...")
     
-    # Reloaded Memory Info
     if st.session_state.active_prompt:
         st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
         if st.button("Send Reloaded Memory"):
@@ -89,33 +88,30 @@ if selected == "Medha (Chat)":
             answer = ""
             success = False
             
-            # --- ENGINE 1: GEMINI 3.1 PRO ---
             if client:
+                # Still using 3.1 Pro for brainpower, but it won't mention its name
                 try:
                     res = client.models.generate_content(
                         model="gemini-3.1-pro-preview",
-                        contents=f"{IDENTITY}\n{prompt}"
+                        contents=f"{SYSTEM_PROMPT}\n{prompt}"
                     )
                     if res.text:
                         answer = res.text
                         success = True
                 except:
-                    # Fallback to Flash-Lite if Pro is busy
                     try:
                         res = client.models.generate_content(
                             model="gemini-3.1-flash-lite-preview",
-                            contents=f"{IDENTITY}\n{prompt}"
+                            contents=f"{SYSTEM_PROMPT}\n{prompt}"
                         )
                         answer = res.text
                         success = True
                     except: pass
 
-            # --- ENGINE 2: FAILSAFE BACKUP ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    # Fixed the cut-off URL here
-                    backup_url = f"https://text.pollinations.ai/{q_enc}?model=openai"
+                    backup_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system=You+are+VEDA+3.0+ULTRA"
                     r = requests.get(backup_url, timeout=10)
                     if r.status_code == 200:
                         answer = r.text
@@ -123,14 +119,14 @@ if selected == "Medha (Chat)":
                 except: pass
 
             if not success:
-                answer = "🔱 **Neural Link Busy.** System overload. Please retry."
+                answer = "🔱 **Neural Link Busy.** Please retry."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
 elif selected == "Srijan (Images)":
     st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    v = st.text_input("Vision:", placeholder="Describe the image...")
+    v = st.text_input("Vision:", placeholder="Describe the masterpiece...")
     if st.button("🚀 RENDER"):
         if v:
             add_to_memory("SRIJAN", v)
