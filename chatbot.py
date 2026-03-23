@@ -4,7 +4,6 @@ import requests
 import urllib.parse
 from datetime import datetime
 import pytz
-import time
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION & IDENTITY ---
@@ -27,8 +26,7 @@ if "active_prompt" not in st.session_state:
 
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
-    log_entry = {"time": ts, "type": m_type, "text": content}
-    st.session_state.neural_logs.insert(0, log_entry)
+    st.session_state.neural_logs.insert(0, {"time": ts, "type": m_type, "text": content})
 
 # --- 🔑 GEMINI INITIALIZATION ---
 client = None
@@ -37,7 +35,7 @@ if "GOOGLE_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
-# --- 2. SIDEBAR ---
+# --- 2. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
@@ -51,19 +49,32 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
 
-    st.markdown("### 🧠 NEURAL MEMORY")
-    st.caption("Click fragment to reload")
-    
-    # Fixed the Syntax Error here
-    for i, log in enumerate(st.session_state.neural_logs[:8]):
-        log_label = f"🕒 {log['time']} | {log['text'][:15]}..."
-        if st.button(log_label, key=f"log_{i}", use_container_width=True):
-            st.session_state.active_prompt = log['text']
-            st.rerun() 
+    # NAVIGATION MENU (This fixes the blank screen)
+    selected = option_menu(
+        menu_title="CORE SYSTEMS",
+        options=["Medha (Chat)", "Srijan (Images)"],
+        icons=["cpu", "layers"],
+        menu_icon="cast",
+        default_index=0,
+        styles={
+            "container": {"padding": "5!important", "background-color": "#0e1117"},
+            "icon": {"color": "#FF8C00", "font-size": "25px"}, 
+            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#262730"},
+            "nav-link-selected": {"background-color": "#FF8C00"},
+        }
+    )
     
     st.divider()
+    st.markdown("### 🧠 NEURAL MEMORY")
+    for i, log in enumerate(st.session_state.neural_logs[:5]):
+        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
+            st.session_state.active_prompt = log['text']
+            st.rerun() 
+
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
-        st.session_state.active_prompt = ""
         st.rerun()
+
+# --- 3. MAIN INTERFACE LOGIC ---
+ORANGE_TITLE = "<style>.orange
