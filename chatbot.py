@@ -14,7 +14,6 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# STRICT IDENTITY
 SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 🧠 NEURAL MEMORY ---
@@ -48,12 +47,6 @@ with st.sidebar:
     st.divider()
     selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
     
-    st.markdown("### 🧠 NEURAL LOGS")
-    for i, log in enumerate(st.session_state.neural_logs[:5]):
-        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
-            st.session_state.active_prompt = log['text']
-            st.rerun()
-
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
@@ -64,18 +57,10 @@ st.markdown("<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: 
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     prompt = st.chat_input("Command VEDA...")
-    
-    if st.session_state.active_prompt:
-        st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
-        if st.button("Send Reloaded"):
-            prompt = st.session_state.active_prompt
-            st.session_state.active_prompt = ""
-
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -85,10 +70,7 @@ if selected == "Medha (Chat)":
             answer, success = "", False
             if client:
                 try:
-                    res = client.models.generate_content(
-                        model="gemini-3.1-pro-preview", 
-                        contents=f"{SYSTEM_PROMPT}\n{prompt}"
-                    )
+                    res = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{SYSTEM_PROMPT}\n{prompt}")
                     answer = res.text
                     success = True
                 except: pass
@@ -106,27 +88,23 @@ if selected == "Medha (Chat)":
 
 elif selected == "Srijan (Images)":
     st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision:", placeholder="Describe the image...")
+    vision = st.text_input("Vision:", placeholder="Describe the masterpiece...")
     
     if st.button("🚀 RENDER"):
         if vision:
             add_to_memory("SRIJAN", vision)
             with st.spinner("🔱 Visualizing..."):
                 try:
-                    # Clean the prompt for 2026 endpoints
+                    # Logic to ensure the Nexus logo text appears correctly
                     clean_v = urllib.parse.quote(vision)
                     
-                    # 🚀 RENDER Waterfall Failsafe Logic
-                    # If the chosen model fails, try the absolute stable fallback automáticamente
-                    st.caption("🔄 Attempting render. If engine is overloaded, trying backup...")
+                    # Primary Stable Engine for 2026
+                    img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux"
                     
-                    try:
-                        # This is the primary high-speed Flux engine for 2026 text generation
-                        # We use 'fast=true' to force a speed-priority render
-                        img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux&fast=true&safe=true"
-                        st.image(img_url, caption=f"Render Choice 1 (Flux): {vision}", use_container_width=True)
-                        st.balloons()
-                    except:
-                        # Secondary attempt with a different endpoint configuration
-                        st.caption("🔄 Primary engine congested. Trying specialized backup...")
-                        img
+                    # Display the image
+                    st.image(img_url, caption=f"Rendering: {vision}", use_container_width=True)
+                    st.balloons()
+                    
+                except Exception as e:
+                    # Fixed: Added proper Exception handling to prevent SyntaxError
+                    st.error(f"🔱 Architect is congested. Error: {e}")
