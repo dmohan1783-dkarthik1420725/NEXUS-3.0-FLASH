@@ -85,7 +85,6 @@ if selected == "Medha (Chat)":
             answer, success = "", False
             if client:
                 try:
-                    # FIXED: Added the missing closing parenthesis here
                     res = client.models.generate_content(
                         model="gemini-3.1-pro-preview", 
                         contents=f"{SYSTEM_PROMPT}\n{prompt}"
@@ -107,17 +106,27 @@ if selected == "Medha (Chat)":
 
 elif selected == "Srijan (Images)":
     st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    v = st.text_input("Vision:", placeholder="Describe the image...")
+    vision = st.text_input("Vision:", placeholder="Describe the image...")
     
     if st.button("🚀 RENDER"):
-        if v:
-            add_to_memory("SRIJAN", v)
+        if vision:
+            add_to_memory("SRIJAN", vision)
             with st.spinner("🔱 Visualizing..."):
                 try:
-                    clean_v = urllib.parse.quote(v)
-                    # Use the high-speed 2026 stable endpoint
-                    img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux"
-                    st.image(img_url, caption=f"Rendering: {v}", use_container_width=True)
-                    st.balloons()
-                except:
-                    st.error("Visual engine overloaded. Try a simpler prompt.")
+                    # Clean the prompt for 2026 endpoints
+                    clean_v = urllib.parse.quote(vision)
+                    
+                    # 🚀 RENDER Waterfall Failsafe Logic
+                    # If the chosen model fails, try the absolute stable fallback automáticamente
+                    st.caption("🔄 Attempting render. If engine is overloaded, trying backup...")
+                    
+                    try:
+                        # This is the primary high-speed Flux engine for 2026 text generation
+                        # We use 'fast=true' to force a speed-priority render
+                        img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux&fast=true&safe=true"
+                        st.image(img_url, caption=f"Render Choice 1 (Flux): {vision}", use_container_width=True)
+                        st.balloons()
+                    except:
+                        # Secondary attempt with a different endpoint configuration
+                        st.caption("🔄 Primary engine congested. Trying specialized backup...")
+                        img
