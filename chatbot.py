@@ -4,7 +4,6 @@ import requests
 import urllib.parse
 from datetime import datetime
 import pytz
-import time
 from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURATION & IDENTITY ---
@@ -29,7 +28,8 @@ def add_to_memory(m_type, content):
 # --- 🔑 INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
 # --- 2. SIDEBAR ---
@@ -56,6 +56,7 @@ with st.sidebar:
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
+        st.session_state.active_prompt = ""
         st.rerun()
 
 # --- 3. MAIN INTERFACE ---
@@ -68,7 +69,7 @@ if selected == "Medha (Chat)":
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     # 📥 INPUT AREA
-    prompt = st.chat_input("Command VEDA 3.1...")
+    prompt = st.chat_input("Command VEDA 3.1 Pro...")
     
     if st.session_state.active_prompt:
         st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
@@ -82,18 +83,12 @@ if selected == "Medha (Chat)":
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            answer, success = "", False
+            answer = ""
+            success = False
             
+            # 🚀 ENGINE 1: GEMINI 3.1 ROTATION
             if client:
-                # 🚀 SMART ROTATION PIPELINE (Prevents "System Overload")
-                models_to_try = [
-                    "gemini-3.1-pro-preview", 
-                    "gemini-3.1-flash-lite-preview",
-                    "gemini-2.5-pro",
-                    "gemini-2.0-flash"
-                ]
-                
-                for model_id in models_to_try:
+                for model_id in ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview"]:
                     try:
                         res = client.models.generate_content(
                             model=model_id,
@@ -104,14 +99,10 @@ if selected == "Medha (Chat)":
                             success = True
                             break
                     except:
-                        continue # If one fails, try the next one instantly
+                        continue 
 
-            # --- ULTIMATE BACKUP (Zero-Fail Logic) ---
+            # 🚀 ENGINE 2: FAILSAFE BACKUP
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    # Using a more robust backup endpoint for 2026
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system=Answer+as+VEDA", timeout=10)
-                    if r.status_code == 200:
-                        answer = r.text
-                        success = True
+                    r = requests.get(f"https://text
