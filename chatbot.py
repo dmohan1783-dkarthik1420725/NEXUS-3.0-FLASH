@@ -14,6 +14,7 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
+# STRICT IDENTITY
 SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 🧠 NEURAL MEMORY ---
@@ -28,7 +29,8 @@ def add_to_memory(m_type, content):
 # --- 🔑 INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
 # --- 2. SIDEBAR ---
@@ -46,6 +48,12 @@ with st.sidebar:
     st.divider()
     selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
     
+    st.markdown("### 🧠 NEURAL LOGS")
+    for i, log in enumerate(st.session_state.neural_logs[:5]):
+        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
+            st.session_state.active_prompt = log['text']
+            st.rerun()
+
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
@@ -56,10 +64,18 @@ st.markdown("<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: 
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
     prompt = st.chat_input("Command VEDA...")
+    
+    if st.session_state.active_prompt:
+        st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
+        if st.button("Send Reloaded"):
+            prompt = st.session_state.active_prompt
+            st.session_state.active_prompt = ""
+
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -69,4 +85,39 @@ if selected == "Medha (Chat)":
             answer, success = "", False
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-3.1-pro-preview", contents
+                    # FIXED: Added the missing closing parenthesis here
+                    res = client.models.generate_content(
+                        model="gemini-3.1-pro-preview", 
+                        contents=f"{SYSTEM_PROMPT}\n{prompt}"
+                    )
+                    answer = res.text
+                    success = True
+                except: pass
+
+            if not success:
+                try:
+                    q = urllib.parse.quote(prompt)
+                    r = requests.get(f"https://text.pollinations.ai/{q}?model=openai", timeout=10)
+                    answer = r.text
+                    success = True
+                except: answer = "🔱 Neural Link Busy."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Images)":
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    v = st.text_input("Vision:", placeholder="Describe the image...")
+    
+    if st.button("🚀 RENDER"):
+        if v:
+            add_to_memory("SRIJAN", v)
+            with st.spinner("🔱 Visualizing..."):
+                try:
+                    clean_v = urllib.parse.quote(v)
+                    # Use the high-speed 2026 stable endpoint
+                    img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux"
+                    st.image(img_url, caption=f"Rendering: {v}", use_container_width=True)
+                    st.balloons()
+                except:
+                    st.error("Visual engine overloaded. Try a simpler prompt.")
