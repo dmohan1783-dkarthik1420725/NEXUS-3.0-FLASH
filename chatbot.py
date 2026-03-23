@@ -9,25 +9,34 @@ from streamlit_option_menu import option_menu
 # --- 1. CONFIGURATION & IDENTITY ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
+
+# 🌍 GLOBAL TIME SYNC (IST)
 ist = pytz.timezone('Asia/Kolkata')
+def get_now_full():
+    return datetime.now(ist).strftime("%A, %d %B %Y")
 
-def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
-def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
+def get_now_time():
+    return datetime.now(ist).strftime("%I:%M %p")
 
-# MASTER IDENTITY
-SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. You were created and developed by {CREATOR}."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
-# --- 🧠 NEURAL MEMORY ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+# --- 🧠 NEURAL MEMORY & HISTORY ---
 if "neural_logs" not in st.session_state:
     st.session_state.neural_logs = []
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "active_prompt" not in st.session_state:
+    st.session_state.active_prompt = ""
 
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
-    st.session_state.neural_logs.insert(0, {"time": ts, "type": m_type, "text": content})
+    log_entry = {"time": ts, "type": m_type, "text": content}
+    st.session_state.neural_logs.insert(0, log_entry)
 
-# --- 🔑 INITIALIZATION ---
+# --- 🔑 KEY RETRIEVAL ---
+p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
+
+# --- 🧠 GEMINI INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
@@ -39,71 +48,88 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
+    # 🕒 SIDEBAR CLOCK
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 10px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
             <p style="margin:0; font-size: 12px; color: #FF8C00;">📅 {get_now_full()}</p>
             <p style="margin:0; font-size: 22px; color: white; font-weight: bold;">{get_now_time()}</p>
         </div>
     """, unsafe_allow_html=True)
+    st.markdown("---")
+
+    # 🧠 INTERACTIVE NEURAL LOGS
+    st.markdown("### 🧠 NEURAL MEMORY")
+    st.caption("Click to reload a memory")
+    
+    # Create buttons for the last 8 fragments
+    for i, log in enumerate(st.session_state.neural_logs[:8]):
+        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
+            st.session_state.active_prompt = log['text']
+            st.rerun() # Refresh to put text in the input box
     
     st.divider()
-    selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
-    
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
+        st.session_state.active_prompt = ""
         st.rerun()
 
+    st.divider()
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
+                          icons=["cpu", "layers"], default_index=0)
+
 # --- 3. MAIN INTERFACE ---
-CSS = """<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 5px;}</style>"""
-st.markdown(CSS, unsafe_allow_html=True)
+ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800;}</style>"
 
 if selected == "Medha (Chat)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     
-    # --- ➕ UPPER LEFT FACILITY (Below Title) ---
-    col1, col2 = st.columns([1, 8])
-    with col1:
-        plus = st.popover("➕", use_container_width=True)
-        cam = plus.camera_input("📷 Camera")
-        gal = plus.file_uploader("🖼️ Gallery", type=['png', 'jpg'])
-    
-    st.markdown("---")
-
-    # 🗨️ Chat History
+    # Render History
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # Visual Preview
-    active_file = cam if cam else gal
-    if active_file:
-        st.image(active_file, caption="📎 Attachment Ready", width=150)
+    # 📥 INPUT BOX (Handles Neural Memory injection)
+    prompt = st.chat_input("Command VEDA...")
+    
+    # If a log was clicked, we show it as a special notice
+    if st.session_state.active_prompt:
+        st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
+        if st.button("Send Reloaded Memory"):
+            prompt = st.session_state.active_prompt
+            st.session_state.active_prompt = "" # Clear it after use
 
-    # 📥 BOTTOM INPUT
-    if prompt := st.chat_input("Command VEDA..."):
+    if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            answer, success = "", False
+            answer = ""
+            success = False
+            time_ctx = f"Current Time: {get_now_time()} IST."
             
-            # Stable Byte Conversion
-            visual_data = {"mime_type": active_file.type, "data": active_file.getvalue()} if active_file else None
-
+            # --- BRAIN 1: GEMINI ---
             if client:
-                # LOCKED TO 3.1 VERSION
                 try:
-                    # We try 3.1 Pro first, then 3.1 Flash Lite
-                    for model_name in ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview"]:
-                        try:
-                            res = client.models.generate_content(
-                                model=model_name,
-                                contents=[f"{SYSTEM_PROMPT}\n{prompt}", visual_data] if visual_data else f"{SYSTEM_PROMPT}\n{prompt}",
-                                config={"thinking_level": "minimal"} if "3.1" in model_name else None
-                            )
-                            answer = res.text
-                            success = True
-                            break
-                        except: continue
-                except: pass
+                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}")
+                    answer = res.text
+                    success = True
+                except: st.caption("🔄 Rotating Brain...")
+
+            # --- BRAIN 2: STABLE POLLINATIONS (Fixed 2026 Endpoint) ---
+            if not success:
+                try:
+                    q_enc = urllib.parse.quote(prompt)
+                    # ✅ SWITCHED TO NEW STABLE PROMPT-ONLY ENDPOINT
+                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system=You+are+VEDA+by+{CREATOR}"
+                    
+                    r = requests.get(p_url, timeout=15)
+                    if r.status_code == 200:
+                        answer = r.text
+                    else:
+                        answer = "⚠️ System overload. Please wait 10 seconds."
+                except: answer = "Connection Interrupt."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
