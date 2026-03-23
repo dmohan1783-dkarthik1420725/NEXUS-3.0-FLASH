@@ -69,37 +69,4 @@ if selected == "Medha (Chat)":
             answer, success = "", False
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{SYSTEM_PROMPT}\n{prompt}")
-                    answer = res.text
-                    success = True
-                except: pass
-
-            if not success:
-                try:
-                    q = urllib.parse.quote(prompt)
-                    r = requests.get(f"https://text.pollinations.ai/{q}?model=openai", timeout=10)
-                    answer = r.text
-                    success = True
-                except: answer = "🔱 Neural Link Busy."
-
-            st.markdown(answer)
-            st.session_state.chat_history.append({"role": "assistant", "content": answer})
-
-elif selected == "Srijan (Images)":
-    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    v = st.text_input("Vision:", placeholder="Describe the masterpiece...")
-    
-    if st.button("🚀 RENDER"):
-        if v:
-            add_to_memory("SRIJAN", v)
-            with st.spinner("🔱 Visualizing..."):
-                try:
-                    # UPDATED: Using the new official stable image endpoint
-                    clean_prompt = urllib.parse.quote(v)
-                    # We use 'flux' as the primary model for 2026 quality
-                    img_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width=1024&height=1024&nologo=true&model=flux"
-                    
-                    st.image(img_url, caption=f"Rendering: {v}", use_container_width=True)
-                    st.balloons()
-                except Exception as e:
-                    st.error(f"Architect Error: {e}")
+                    res = client.models.generate_content(model="gemini-3.1-pro-preview", contents
