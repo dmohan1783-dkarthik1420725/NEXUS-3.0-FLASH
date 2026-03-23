@@ -14,7 +14,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. You are powered by Gemini 3.1 Pro."
+# IDENTITY CHIP
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Powered by Gemini 3.1 Pro."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -37,6 +38,7 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
+    # ORANGE SIDEBAR CLOCK
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 10px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
             <p style="margin:0; font-size: 12px; color: #FF8C00;">📅 {get_now_full()}</p>
@@ -71,6 +73,7 @@ if selected == "Medha (Chat)":
     # 📥 INPUT AREA
     prompt = st.chat_input("Command VEDA 3.1 Pro...")
     
+    # Reloaded Memory Info
     if st.session_state.active_prompt:
         st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
         if st.button("Send Reloaded Memory"):
@@ -86,23 +89,55 @@ if selected == "Medha (Chat)":
             answer = ""
             success = False
             
-            # 🚀 ENGINE 1: GEMINI 3.1 ROTATION
+            # --- ENGINE 1: GEMINI 3.1 PRO ---
             if client:
-                for model_id in ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview"]:
+                try:
+                    res = client.models.generate_content(
+                        model="gemini-3.1-pro-preview",
+                        contents=f"{IDENTITY}\n{prompt}"
+                    )
+                    if res.text:
+                        answer = res.text
+                        success = True
+                except:
+                    # Fallback to Flash-Lite if Pro is busy
                     try:
                         res = client.models.generate_content(
-                            model=model_id,
+                            model="gemini-3.1-flash-lite-preview",
                             contents=f"{IDENTITY}\n{prompt}"
                         )
-                        if res.text:
-                            answer = res.text
-                            success = True
-                            break
-                    except:
-                        continue 
+                        answer = res.text
+                        success = True
+                    except: pass
 
-            # 🚀 ENGINE 2: FAILSAFE BACKUP
+            # --- ENGINE 2: FAILSAFE BACKUP ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    r = requests.get(f"https://text
+                    # Fixed the cut-off URL here
+                    backup_url = f"https://text.pollinations.ai/{q_enc}?model=openai"
+                    r = requests.get(backup_url, timeout=10)
+                    if r.status_code == 200:
+                        answer = r.text
+                        success = True
+                except: pass
+
+            if not success:
+                answer = "🔱 **Neural Link Busy.** System overload. Please retry."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Images)":
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    v = st.text_input("Vision:", placeholder="Describe the image...")
+    if st.button("🚀 RENDER"):
+        if v:
+            add_to_memory("SRIJAN", v)
+            with st.spinner("🔱 Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(v)
+                    img_url = f"https://pollinations.ai/p/{v_enc}?width=1024&height=1024&seed=42&model=flux&nologo=true"
+                    st.image(img_url, use_container_width=True)
+                except:
+                    st.error("Architect currently busy.")
