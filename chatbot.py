@@ -47,8 +47,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.divider()
-    selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], 
-                          icons=["cpu", "layers"], default_index=0)
+    selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
     
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
@@ -56,28 +55,31 @@ with st.sidebar:
         st.rerun()
 
 # --- 3. MAIN INTERFACE ---
-CSS = """
-<style>
-    .orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800;}
-    /* Fix for the (+) button to align with bottom chat input */
-    .stPopover { position: fixed; bottom: 85px; left: 50px; z-index: 1000; }
-</style>
-"""
+CSS = """<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800; margin-bottom: 5px;}</style>"""
 st.markdown(CSS, unsafe_allow_html=True)
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     
-    # 🗨️ Chat History Container
+    # --- ➕ UPPER LEFT FACILITY (Below Title) ---
+    col1, col2 = st.columns([1, 8])
+    with col1:
+        plus = st.popover("➕", use_container_width=True)
+        cam = plus.camera_input("📷 Camera")
+        gal = plus.file_uploader("🖼️ Gallery", type=['png', 'jpg'])
+    
+    st.markdown("---")
+
+    # 🗨️ Chat History
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # --- ➕ BOTTOM FACILITY (Fixed position) ---
-    plus = st.popover("➕")
-    cam = plus.camera_input("Take Photo")
-    gal = plus.file_uploader("Upload Image", type=['png', 'jpg'])
+    # Visual Preview
+    active_file = cam if cam else gal
+    if active_file:
+        st.image(active_file, caption="📎 Attachment Ready", width=150)
 
-    # 📥 BOTTOM SEARCH BAR (st.chat_input is always at the bottom by default)
+    # 📥 BOTTOM INPUT
     if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -86,43 +88,22 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             answer, success = "", False
             
-            # Processing Image Bytes
-            visual_data = None
-            if cam or gal:
-                file = cam if cam else gal
-                visual_data = {"mime_type": file.type, "data": file.getvalue()}
+            # Stable Byte Conversion
+            visual_data = {"mime_type": active_file.type, "data": active_file.getvalue()} if active_file else None
 
             if client:
+                # LOCKED TO 3.1 VERSION
                 try:
-                    # Using 2.0 Flash for maximum speed and stability
-                    res = client.models.generate_content(
-                        model="gemini-2.0-flash", 
-                        contents=[f"{SYSTEM_PROMPT}\n{prompt}", visual_data] if visual_data else f"{SYSTEM_PROMPT}\n{prompt}"
-                    )
-                    answer = res.text
-                    success = True
+                    # We try 3.1 Pro first, then 3.1 Flash Lite
+                    for model_name in ["gemini-3.1-pro-preview", "gemini-3.1-flash-lite-preview"]:
+                        try:
+                            res = client.models.generate_content(
+                                model=model_name,
+                                contents=[f"{SYSTEM_PROMPT}\n{prompt}", visual_data] if visual_data else f"{SYSTEM_PROMPT}\n{prompt}",
+                                config={"thinking_level": "minimal"} if "3.1" in model_name else None
+                            )
+                            answer = res.text
+                            success = True
+                            break
+                        except: continue
                 except: pass
-
-            # Safe Fallback to Text API
-            if not success:
-                try:
-                    q = urllib.parse.quote(f"Response as VEDA (Created by {CREATOR}): {prompt}")
-                    r = requests.get(f"https://text.pollinations.ai/{q}?model=openai", timeout=12)
-                    if r.status_code == 200 and "deprecation_notice" not in r.text:
-                        answer = r.text
-                        success = True
-                except: pass
-
-            if not success: 
-                answer = "🔱 **Neural Link Stabilizing.** Please wait 5 seconds and retry."
-            
-            st.markdown(answer)
-            st.session_state.chat_history.append({"role": "assistant", "content": answer})
-
-elif selected == "Srijan (Images)":
-    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    v = st.text_input("Vision:")
-    if st.button("🚀 RENDER"):
-        if v:
-            img = f"https://pollinations.ai/p/{urllib.parse.quote(v)}?width=1024&height=1024&seed=42&model=flux&nologo=true"
-            st.image(img, use_container_width=True)
