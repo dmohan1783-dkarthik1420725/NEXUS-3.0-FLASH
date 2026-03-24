@@ -1,12 +1,11 @@
 import streamlit as st
-from google import genai
 import requests
 import urllib.parse
 from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
 
-# --- 1. CONFIGURATION ---
+# --- 1. CONFIGURATION & IDENTITY ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
 ist = pytz.timezone('Asia/Kolkata')
@@ -14,8 +13,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# Identity Lock
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
+# SYSTEM IDENTITY: Locked to GPT-5.4
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Your core engine is GPT-5.4."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -26,17 +25,12 @@ def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
     st.session_state.neural_logs.insert(0, {"time": ts, "type": m_type, "text": content})
 
-# --- 🔑 INITIALIZATION ---
-client = None
-if "GOOGLE_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    except: client = None
-
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
+    # 🕒 IST CLOCK
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 10px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
             <p style="margin:0; font-size: 12px; color: #FF8C00;">📅 {get_now_full()}</p>
@@ -64,14 +58,17 @@ st.markdown("<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: 
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    st.caption(f"🚀 Neural Link: **GPT-5.4 Active** | Stable Connection")
+    
     for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        with st.chat_message(msg["role"]): 
+            st.markdown(msg["content"])
 
-    # Clean Input Bar (No camera/gallery)
-    prompt = st.chat_input("Command VEDA...")
+    # 📥 Clean Input Bar (Pinned to Bottom)
+    prompt = st.chat_input("Command VEDA (GPT-5.4)...")
     
     if st.session_state.active_prompt:
-        st.info(f"💡 Reloaded: **{st.session_state.active_prompt}**")
+        st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
         if st.button("Send Reloaded"):
             prompt = st.session_state.active_prompt
             st.session_state.active_prompt = ""
@@ -79,4 +76,40 @@ if selected == "Medha (Chat)":
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        with st.chat_message("user"): 
+            st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            with st.spinner("🔱 Reasoning via GPT-5.4..."):
+                try:
+                    q_enc = urllib.parse.quote(prompt)
+                    sys_enc = urllib.parse.quote(IDENTITY)
+                    # 🚀 Calling the GPT-5.4 Endpoint via Pollinations
+                    api_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_enc}"
+                    
+                    r = requests.get(api_url, timeout=20)
+                    if r.status_code == 200 and "{" not in r.text[:10]:
+                        answer = r.text
+                    else:
+                        answer = "🔱 **Neural Core Congested.** The GPT-5.4 link is heavy right now. Please retry."
+                except:
+                    answer = "🔱 **Connection Interrupt.** Check your network link."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Images)":
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    v = st.text_input("Vision:", placeholder="Describe the masterpiece...")
+    if st.button("🚀 RENDER"):
+        if v:
+            add_to_memory("SRIJAN", v)
+            with st.spinner("🔱 Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(v)
+                    # Locked to Flux for 2026 Artistic Superiority
+                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    st.image(img_url, use_container_width=True)
+                    st.balloons()
+                except:
+                    st.error("Architect currently busy.")
