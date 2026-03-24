@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
 
-# --- 1. CONFIGURATION & IDENTITY ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "Dumpala Karthik"
 ist = pytz.timezone('Asia/Kolkata')
@@ -13,8 +13,7 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# SYSTEM IDENTITY: Locked to GPT-5.4
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}. Your core engine is GPT-5.4."
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Core: GPT-5.4."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -30,7 +29,6 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
-    # 🕒 IST CLOCK
     st.markdown(f"""
         <div style="background-color: rgba(255, 140, 0, 0.1); padding: 10px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
             <p style="margin:0; font-size: 12px; color: #FF8C00;">📅 {get_now_full()}</p>
@@ -39,10 +37,9 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.divider()
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
-                          icons=["cpu", "layers"], default_index=0)
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
     
-    st.markdown("### 🧠 NEURAL MEMORY")
+    st.markdown("### 🧠 NEURAL LOGS")
     for i, log in enumerate(st.session_state.neural_logs[:8]):
         if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
             st.session_state.active_prompt = log['text']
@@ -58,13 +55,10 @@ st.markdown("<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: 
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.caption(f"🚀 Neural Link: **GPT-5.4 Active** | Stable Connection")
-    
     for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): 
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # 📥 Clean Input Bar (Pinned to Bottom)
     prompt = st.chat_input("Command VEDA (GPT-5.4)...")
     
     if st.session_state.active_prompt:
@@ -76,7 +70,7 @@ if selected == "Medha (Chat)":
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): 
+        with st.chat_message("user"):
             st.markdown(prompt)
         
         with st.chat_message("assistant"):
@@ -84,16 +78,16 @@ if selected == "Medha (Chat)":
                 try:
                     q_enc = urllib.parse.quote(prompt)
                     sys_enc = urllib.parse.quote(IDENTITY)
-                    # 🚀 Calling the GPT-5.4 Endpoint via Pollinations
+                    # ✅ Pollinations GPT-5.4 Stable Link
                     api_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_enc}"
-                    
                     r = requests.get(api_url, timeout=20)
+                    
                     if r.status_code == 200 and "{" not in r.text[:10]:
                         answer = r.text
                     else:
-                        answer = "🔱 **Neural Core Congested.** The GPT-5.4 link is heavy right now. Please retry."
+                        answer = "🔱 **Neural Link Congested.** Please wait 10s and retry."
                 except:
-                    answer = "🔱 **Connection Interrupt.** Check your network link."
+                    answer = "🔱 **Connection Error.** Please check your internet."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -107,7 +101,6 @@ elif selected == "Srijan (Images)":
             with st.spinner("🔱 Visualizing..."):
                 try:
                     v_enc = urllib.parse.quote(v)
-                    # Locked to Flux for 2026 Artistic Superiority
                     img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img_url, use_container_width=True)
                     st.balloons()
