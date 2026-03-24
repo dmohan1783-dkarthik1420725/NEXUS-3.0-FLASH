@@ -12,31 +12,23 @@ CREATOR = "Dumpala Karthik"
 
 # 🌍 GLOBAL TIME SYNC (IST)
 ist = pytz.timezone('Asia/Kolkata')
-def get_now_full():
-    return datetime.now(ist).strftime("%A, %d %B %Y")
+def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
+def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-def get_now_time():
-    return datetime.now(ist).strftime("%I:%M %p")
-
+# Identity Lock (No "Powered by Gemini" mentions)
 IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 🧠 NEURAL MEMORY & HISTORY ---
-if "neural_logs" not in st.session_state:
-    st.session_state.neural_logs = []
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "active_prompt" not in st.session_state:
-    st.session_state.active_prompt = ""
+if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
+if "chat_history" not in st.session_state: st.session_state.chat_history = []
+if "active_prompt" not in st.session_state: st.session_state.active_prompt = ""
 
 def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
     log_entry = {"time": ts, "type": m_type, "text": content}
     st.session_state.neural_logs.insert(0, log_entry)
 
-# --- 🔑 KEY RETRIEVAL ---
-p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
-
-# --- 🧠 GEMINI INITIALIZATION ---
+# --- 🔑 GEMINI INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
@@ -59,13 +51,10 @@ with st.sidebar:
 
     # 🧠 INTERACTIVE NEURAL LOGS
     st.markdown("### 🧠 NEURAL MEMORY")
-    st.caption("Click to reload a memory")
-    
-    # Create buttons for the last 8 fragments
     for i, log in enumerate(st.session_state.neural_logs[:8]):
         if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
             st.session_state.active_prompt = log['text']
-            st.rerun() # Refresh to put text in the input box
+            st.rerun()
     
     st.divider()
     if st.button("🗑️ Wipe Neural Core"):
@@ -85,19 +74,16 @@ if selected == "Medha (Chat)":
     st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     
-    # Render History
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    # 📥 INPUT BOX (Handles Neural Memory injection)
     prompt = st.chat_input("Command VEDA...")
     
-    # If a log was clicked, we show it as a special notice
     if st.session_state.active_prompt:
         st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
         if st.button("Send Reloaded Memory"):
             prompt = st.session_state.active_prompt
-            st.session_state.active_prompt = "" # Clear it after use
+            st.session_state.active_prompt = ""
 
     if prompt:
         add_to_memory("MEDHA", prompt)
@@ -105,31 +91,49 @@ if selected == "Medha (Chat)":
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            answer = ""
-            success = False
-            time_ctx = f"Current Time: {get_now_time()} IST."
+            answer, success = "", False
             
-            # --- BRAIN 1: GEMINI ---
+            # --- BRAIN 1: GEMINI 3.1 PRO ---
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-1.5-flash-8b", contents=f"{IDENTITY}\n{time_ctx}\n\nUser: {prompt}")
+                    res = client.models.generate_content(
+                        model="gemini-3.1-pro-preview", 
+                        contents=f"{IDENTITY}\n\nUser: {prompt}"
+                    )
                     answer = res.text
                     success = True
                 except: st.caption("🔄 Rotating Brain...")
 
-            # --- BRAIN 2: STABLE POLLINATIONS (Fixed 2026 Endpoint) ---
+            # --- BRAIN 2: STABLE FALLBACK (With Error Shield) ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    # ✅ SWITCHED TO NEW STABLE PROMPT-ONLY ENDPOINT
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system=You+are+VEDA+by+{CREATOR}"
+                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai"
+                    r = requests.get(p_url, timeout=12)
                     
-                    r = requests.get(p_url, timeout=15)
-                    if r.status_code == 200:
+                    if r.status_code == 200 and "{" not in r.text[:10]:
                         answer = r.text
+                        success = True
                     else:
-                        answer = "⚠️ System overload. Please wait 10 seconds."
+                        answer = "🔱 **Neural Link Heavy.** Please wait 10 seconds and retry."
                 except: answer = "Connection Interrupt."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Images)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    vision = st.text_input("Vision:", placeholder="Describe the masterpiece...")
+    
+    if st.button("🚀 RENDER"):
+        if vision:
+            add_to_memory("SRIJAN", vision)
+            with st.spinner("🔱 Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(vision)
+                    # Locked to high-speed 2026 Flux engine
+                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    st.image(img_url, caption=f"Rendering: {vision}", use_container_width=True)
+                    st.balloons()
+                except: st.error("Architect currently busy.")
