@@ -14,7 +14,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
+# MASTER IDENTITY (No "Powered by" mentions)
+SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. You were created and developed by {CREATOR}. You are a sovereign high-intelligence architect."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -47,9 +48,16 @@ with st.sidebar:
     st.divider()
     selected = option_menu("CORE", ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
     
+    st.markdown("### 🧠 NEURAL LOGS")
+    for i, log in enumerate(st.session_state.neural_logs[:8]):
+        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
+            st.session_state.active_prompt = log['text']
+            st.rerun()
+
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
+        st.session_state.active_prompt = ""
         st.rerun()
 
 # --- 3. MAIN INTERFACE ---
@@ -57,10 +65,20 @@ st.markdown("<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: 
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    
+    # 🗨️ Chat History Display
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
+    # 📥 BOTTOM SEARCH BAR (Text Only)
     prompt = st.chat_input("Command VEDA...")
+    
+    if st.session_state.active_prompt:
+        st.info(f"💡 Reloaded Memory: **{st.session_state.active_prompt}**")
+        if st.button("Send Reloaded Memory"):
+            prompt = st.session_state.active_prompt
+            st.session_state.active_prompt = ""
+
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -68,43 +86,26 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             answer, success = "", False
+            
+            # --- 🚀 ENGINE 1: GEMINI 3.1 PRO ---
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{SYSTEM_PROMPT}\n{prompt}")
-                    answer = res.text
-                    success = True
-                except: pass
+                    res = client.models.generate_content(
+                        model="gemini-3.1-pro-preview",
+                        contents=f"{SYSTEM_PROMPT}\n{prompt}"
+                    )
+                    if res.text:
+                        answer = res.text
+                        success = True
+                except:
+                    # Fallback to 3.1 Flash-Lite if Pro is busy
+                    try:
+                        res = client.models.generate_content(
+                            model="gemini-3.1-flash-lite-preview",
+                            contents=f"{SYSTEM_PROMPT}\n{prompt}"
+                        )
+                        answer = res.text
+                        success = True
+                    except: pass
 
-            if not success:
-                try:
-                    q = urllib.parse.quote(prompt)
-                    r = requests.get(f"https://text.pollinations.ai/{q}?model=openai", timeout=10)
-                    answer = r.text
-                    success = True
-                except: answer = "🔱 Neural Link Busy."
-
-            st.markdown(answer)
-            st.session_state.chat_history.append({"role": "assistant", "content": answer})
-
-elif selected == "Srijan (Images)":
-    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision:", placeholder="Describe the masterpiece...")
-    
-    if st.button("🚀 RENDER"):
-        if vision:
-            add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Visualizing..."):
-                try:
-                    # Logic to ensure the Nexus logo text appears correctly
-                    clean_v = urllib.parse.quote(vision)
-                    
-                    # Primary Stable Engine for 2026
-                    img_url = f"https://image.pollinations.ai/prompt/{clean_v}?width=1024&height=1024&nologo=true&model=flux"
-                    
-                    # Display the image
-                    st.image(img_url, caption=f"Rendering: {vision}", use_container_width=True)
-                    st.balloons()
-                    
-                except Exception as e:
-                    # Fixed: Added proper Exception handling to prevent SyntaxError
-                    st.error(f"🔱 Architect is congested. Error: {e}")
+            # --- 🛡️
