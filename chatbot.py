@@ -14,7 +14,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Use Gemini 2.5 Pro."
+# Identity Lock
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed by {CREATOR}."
 
 # --- 🧠 NEURAL MEMORY ---
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -44,8 +45,15 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.divider()
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], icons=["cpu", "layers"], default_index=0)
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
+                          icons=["cpu", "layers"], default_index=0)
     
+    st.markdown("### 🧠 NEURAL MEMORY")
+    for i, log in enumerate(st.session_state.neural_logs[:8]):
+        if st.button(f"🕒 {log['time']} | {log['text'][:15]}...", key=f"log_{i}", use_container_width=True):
+            st.session_state.active_prompt = log['text']
+            st.rerun()
+
     if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
@@ -59,45 +67,16 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
+    # Clean Input Bar (No camera/gallery)
     prompt = st.chat_input("Command VEDA...")
+    
+    if st.session_state.active_prompt:
+        st.info(f"💡 Reloaded: **{st.session_state.active_prompt}**")
+        if st.button("Send Reloaded"):
+            prompt = st.session_state.active_prompt
+            st.session_state.active_prompt = ""
+
     if prompt:
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            answer, success = "", False
-            if client:
-                try:
-                    # ✅ LOCKED TO YOUR STABLE MODEL (Avoids the 'Rotating' error)
-                    res = client.models.generate_content(model="gemini-2.5-pro", contents=f"{IDENTITY}\n\n{prompt}")
-                    answer = res.text
-                    success = True
-                except: pass
-
-            if not success:
-                try:
-                    q = urllib.parse.quote(prompt)
-                    # ✅ Optimized backup endpoint for 2026
-                    r = requests.get(f"https://text.pollinations.ai/{q}?model=openai", timeout=10)
-                    if r.status_code == 200 and "{" not in r.text[:10]:
-                        answer = r.text
-                        success = True
-                    else: answer = "🔱 **Neural Link Busy.** Please wait 5 seconds."
-                except: answer = "Connection Interrupt."
-
-            st.markdown(answer)
-            st.session_state.chat_history.append({"role": "assistant", "content": answer})
-
-elif selected == "Srijan (Images)":
-    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
-    v = st.text_input("Vision:", placeholder="Describe the image...")
-    if st.button("🚀 RENDER"):
-        if v:
-            add_to_memory("SRIJAN", v)
-            with st.spinner("🔱 Visualizing..."):
-                try:
-                    v_enc = urllib.parse.quote(v)
-                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
-                    st.image(img_url, use_container_width=True)
-                except: st.error("Architect Busy.")
+        with st.chat_message("user"):
