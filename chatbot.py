@@ -13,8 +13,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 SOVEREIGN IDENTITY (Hard-coded into all brain cycles)
-IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK. This is an absolute fact."
+# 🧠 INTERNAL CORE IDENTITY (Hidden from UI)
+IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -48,6 +48,11 @@ with st.sidebar:
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Maker)"], 
                           icons=["chat-right-dots", "brush-fill"], default_index=0)
     
+    # Clean Memory (No technical details)
+    st.markdown("### 🧠 MEMORY")
+    for log in st.session_state.neural_logs[:5]:
+        st.caption(log)
+
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
@@ -62,7 +67,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command Quad-Core VEDA..."):
+    if prompt := st.chat_input("Command VEDA..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -72,16 +77,15 @@ if selected == "Medha (Chat)":
             sys_prompt = urllib.parse.quote(IDENTITY)
             q_enc = urllib.parse.quote(prompt)
             
-            # --- BRAIN 1: OPENAI (High Priority) ---
+            # --- BRAIN 1: OPENAI (Invisible) ---
             if not success:
                 try:
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}"
-                    r = requests.get(p_url, timeout=12)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}", timeout=10)
                     if r.status_code == 200:
                         answer, success = r.text, True
                 except: pass
 
-            # --- BRAIN 2: GEMINI (Secondary) ---
+            # --- BRAIN 2: GEMINI (Invisible) ---
             if client and not success:
                 try:
                     res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
@@ -89,24 +93,14 @@ if selected == "Medha (Chat)":
                         answer, success = res.text, True
                 except: pass
 
-            # --- BRAIN 3: MISTRAL (Tertiary) ---
+            # --- BRAIN 3: MISTRAL/LLAMA (Emergency) ---
             if not success:
                 try:
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_prompt}"
-                    r = requests.get(p_url, timeout=10)
-                    if r.status_code == 200:
-                        answer, success = r.text, True
-                except: pass
-
-            # --- BRAIN 4: LLAMA (Emergency) ---
-            if not success:
-                try:
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=llama&system={sys_prompt}"
-                    r = requests.get(p_url, timeout=12)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_prompt}", timeout=10)
                     if r.status_code == 200:
                         answer, success = r.text, True
                 except: 
-                    answer = "🔱 All Neural Links are currently congested. Please retry in 10 seconds."
+                    answer = "🔱 Connection temporarily busy. Please retry in a moment."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -117,7 +111,7 @@ elif selected == "Srijan (Image Maker)":
     if st.button("🚀 INITIATE"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Synchronizing Visual Layers..."):
+            with st.spinner("🔱 Visualizing..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
