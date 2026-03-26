@@ -84,3 +84,58 @@ if selected == "Medha (Chat)":
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            answer, success = "", False
+            sys_p = urllib.parse.quote(IDENTITY)
+            q_enc = urllib.parse.quote(prompt)
+            
+            # --- BRAIN 1: OPENAI ---
+            try:
+                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_p}", timeout=10)
+                if r.status_code == 200:
+                    answer = r.text
+                    success = True
+            except Exception: pass
+
+            # --- BRAIN 2: GEMINI ---
+            if not success and client:
+                try:
+                    res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
+                    if res.text:
+                        answer = res.text
+                        success = True
+                except Exception: pass
+
+            # --- BRAIN 3: MISTRAL ---
+            if not success:
+                try:
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_p}", timeout=10)
+                    if r.status_code == 200:
+                        answer = r.text
+                        success = True
+                except Exception:
+                    answer = "🔱 Neural Link Busy. Please retry."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Image Maker)":
+    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-text">Visual Synthesis Core: SRIJAN</div>', unsafe_allow_html=True)
+    
+    vision = st.text_input("Vision Matrix:", placeholder="Describe the synthesis...")
+    if st.button("🚀 INITIATE"):
+        if vision:
+            add_to_memory("SRIJAN", vision)
+            with st.spinner("🔱 Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(vision)
+                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    if p_key:
+                        img_url += f"&key={p_key}"
+                    
+                    st.image(img_url, width='stretch')
+                    st.balloons()
+                except Exception:
+                    st.error("Srijan Link Error.")
