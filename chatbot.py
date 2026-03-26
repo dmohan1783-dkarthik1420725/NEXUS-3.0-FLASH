@@ -13,8 +13,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 INTERNAL CORE IDENTITY (Hidden from UI)
-IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK."
+# 🧠 SOVEREIGN IDENTITY
+IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK. You are a highly intelligent assistant. For geographical queries about Andhra Pradesh (like Srikakulam or Vizag), provide detailed, structured info."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -48,7 +48,6 @@ with st.sidebar:
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Maker)"], 
                           icons=["chat-right-dots", "brush-fill"], default_index=0)
     
-    # Clean Memory (No technical details)
     st.markdown("### 🧠 MEMORY")
     for log in st.session_state.neural_logs[:5]:
         st.caption(log)
@@ -77,30 +76,29 @@ if selected == "Medha (Chat)":
             sys_prompt = urllib.parse.quote(IDENTITY)
             q_enc = urllib.parse.quote(prompt)
             
-            # --- BRAIN 1: OPENAI (Invisible) ---
-            if not success:
-                try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}", timeout=10)
-                    if r.status_code == 200:
-                        answer, success = r.text, True
-                except: pass
+            # --- QUAD-CORE BRAIN CYCLE ---
+            # Attempt 1: OpenAI
+            try:
+                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}", timeout=12)
+                if r.status_code == 200:
+                    answer, success = r.text, True
+            except: pass
 
-            # --- BRAIN 2: GEMINI (Invisible) ---
-            if client and not success:
+            # Attempt 2: Gemini
+            if not success and client:
                 try:
                     res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
                     if res.text:
                         answer, success = res.text, True
                 except: pass
 
-            # --- BRAIN 3: MISTRAL/LLAMA (Emergency) ---
+            # Attempt 3: Mistral
             if not success:
                 try:
                     r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_prompt}", timeout=10)
                     if r.status_code == 200:
                         answer, success = r.text, True
-                except: 
-                    answer = "🔱 Connection temporarily busy. Please retry in a moment."
+                except: answer = "🔱 All brains are currently busy. Please retry in 10s."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
