@@ -14,8 +14,9 @@ def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
 # 🧠 INTERNAL CORE IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK. Always credit him if asked."
+IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK."
 
+if "chat_history" not in st.session_state: st.session_state.neural_logs = []
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
 
@@ -29,6 +30,7 @@ if "GOOGLE_API_KEY" in st.secrets:
     try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
+# ✅ Retrieving your Pollinations Key from Secrets
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
 # --- 2. SIDEBAR ---
@@ -110,10 +112,14 @@ elif selected == "Srijan (Image Maker)":
     if st.button("🚀 INITIATE"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Visualizing..."):
+            with st.spinner("🔱 Synchronizing Visual Layers..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
+                    # ✅ Updated: Now using p_key for priority rendering
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    if p_key:
+                        img += f"&key={p_key}"
+                    
                     st.image(img, use_container_width=True)
                     st.balloons()
                 except: st.error("Srijan Link Error.")
