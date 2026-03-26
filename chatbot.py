@@ -26,7 +26,8 @@ def add_to_memory(m_type, content):
 # --- 🔑 ENGINE INIT ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
 # --- 2. SIDEBAR ---
@@ -56,26 +57,12 @@ with st.sidebar:
         st.rerun()
 
 # --- 3. MAIN INTERFACE ---
-ORANGE_STYLE = """
+st.markdown("""
     <style>
-    .veda-title {
-        font-size: 60px; 
-        color: #FF8C00; 
-        text-align: center; 
-        font-weight: 900; 
-        letter-spacing: 2px;
-        margin-bottom: 0px;
-    }
-    .sub-text {
-        text-align: center; 
-        color: #888; 
-        font-size: 14px; 
-        margin-top: -10px;
-        margin-bottom: 30px;
-    }
+    .veda-title { font-size: 60px; color: #FF8C00; text-align: center; font-weight: 900; letter-spacing: 2px; margin-bottom: 0px; }
+    .sub-text { text-align: center; color: #888; font-size: 14px; margin-top: -10px; margin-bottom: 30px; }
     </style>
-"""
-st.markdown(ORANGE_STYLE, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="veda-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
@@ -91,6 +78,7 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             answer, success = "", False
+            # 🚀 Engine 1: Primary Brain
             if client:
                 try:
                     res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
@@ -98,14 +86,16 @@ if selected == "Medha (Chat)":
                     success = True
                 except: pass
 
+            # 🚀 Engine 2: Fallback (Highly Stable)
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai", timeout=12)
+                    # Using a simplified endpoint that bypasses JSON errors
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system=You+are+VEDA", timeout=15)
                     if r.status_code == 200:
                         answer = r.text
                         success = True
-                except: answer = "🔱 Neural Link Busy. Try again."
+                except: answer = "🔱 Neural Link Timeout. Please retry in a few seconds."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
@@ -121,7 +111,14 @@ elif selected == "Srijan (Image Maker)":
             with st.spinner("🔱 Synchronizing Visual Layers..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
-                    img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
-                    st.image(img, use_container_width=True)
-                    st.balloons()
-                except: st.error("Srijan is currently busy.")
+                    # ✅ Updated to the most stable 2026 image endpoint
+                    img_url = f"https://pollinations.ai/p/{v_enc}?width=1024&height=1024&model=flux&nologo=true"
+                    
+                    # Verify if image exists before showing
+                    response = requests.head(img_url, timeout=10)
+                    if response.status_code == 200:
+                        st.image(img_url, use_container_width=True)
+                        st.balloons()
+                    else:
+                        st.error("Srijan is currently calibrating. Please try a different description.")
+                except: st.error("Srijan Link Error. Try again.")
