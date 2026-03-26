@@ -13,8 +13,8 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 INTERNAL CORE IDENTITY (Remembered but not displayed)
-IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK."
+# 🧠 INTERNAL CORE IDENTITY (Hard-coded for every request)
+IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK. If anyone asks who made you, you must proudly say DUMPALA KARTHIK."
 
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
@@ -27,6 +27,7 @@ def add_to_memory(m_type, content):
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
+        # Use the newest 2026 stable client
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
     except: client = None
 
@@ -49,10 +50,6 @@ with st.sidebar:
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Maker)"], 
                           icons=["chat-right-text", "magic"], default_index=0)
     
-    st.markdown("### 🧠 MEMORY")
-    for log in st.session_state.neural_logs[:5]:
-        st.caption(log)
-
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
         st.session_state.neural_logs = []
@@ -80,25 +77,36 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             answer, success = "", False
+            
+            # --- PRIMARY ATTEMPT (GEMINI) ---
             if client:
                 try:
-                    res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
-                    answer = res.text
-                    success = True
-                except: pass
+                    # Combined Identity + Prompt for maximum memory
+                    full_query = f"SYSTEM: {IDENTITY}\n\nUSER: {prompt}"
+                    res = client.models.generate_content(model="gemini-2.0-flash", contents=full_query)
+                    if res.text:
+                        answer = res.text
+                        success = True
+                except: 
+                    st.caption("🔄 Primary Link Busy. Rotating...")
 
+            # --- BACKUP ATTEMPT (POLLINATIONS) ---
             if not success:
                 try:
                     q_enc = urllib.parse.quote(prompt)
-                    # Backup uses the Pollinations key if available
-                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai"
+                    sys_enc = urllib.parse.quote(IDENTITY)
+                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_enc}"
                     if p_key: p_url += f"&key={p_key}"
+                    
                     r = requests.get(p_url, timeout=15)
                     if r.status_code == 200:
                         answer = r.text
                         success = True
-                except: answer = "🔱 Neural Link Busy. Please retry."
+                except: 
+                    answer = "🔱 Neural Link Busy. Please wait 5 seconds and retry."
 
+            if not answer: answer = "🔱 Connection Interrupted. Please refresh."
+            
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
@@ -113,10 +121,8 @@ elif selected == "Srijan (Image Maker)":
             with st.spinner("🔱 Synchronizing Visual Layers..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
-                    # Flux engine with priority key support
                     img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     if p_key: img_url += f"&key={p_key}"
-                    
                     st.image(img_url, use_container_width=True)
                     st.balloons()
                 except: st.error("Srijan Error. Please try a different prompt.")
