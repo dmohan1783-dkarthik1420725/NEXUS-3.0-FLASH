@@ -36,7 +36,7 @@ p_key = st.secrets.get("POLLINATIONS_KEY", "")
 # --- 2. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
     
     st.markdown("---")
     st.markdown(f"""
