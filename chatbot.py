@@ -26,8 +26,10 @@ def add_to_memory(m_type, content):
 # --- 🔑 API INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    except: client = None
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    except:
+        client = None
 
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
@@ -48,45 +50,4 @@ with st.sidebar:
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Maker)"], 
                           icons=["chat-right-dots", "brush-fill"], default_index=0)
     
-    st.markdown("### 🧠 MEMORY")
-    for log in st.session_state.neural_logs[:5]:
-        st.caption(log)
-
-    if st.button("🗑️ Reset Core"):
-        st.session_state.chat_history = []
-        st.session_state.neural_logs = []
-        st.rerun()
-
-# --- 3. MAIN INTERFACE ---
-st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .v-title { font-size: 60px; color: #FF8C00; text-align: center; font-weight: 900; letter-spacing: 2px; }
-    .sub-text { text-align: center; color: #888; font-size: 14px; margin-top: -10px; margin-bottom: 30px; }
-    </style>
-""", unsafe_allow_html=True)
-
-if selected == "Medha (Chat)":
-    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-text">Neural Language Interface: MEDHA</div>', unsafe_allow_html=True)
-    
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-
-    if prompt := st.chat_input("Command VEDA..."):
-        add_to_memory("MEDHA", prompt)
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            answer, success = "", False
-            sys_prompt = urllib.parse.quote(IDENTITY)
-            q_enc = urllib.parse.quote(prompt)
-            
-            # --- QUAD-CORE SILENT CYCLE ---
-            try:
-                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}", timeout=10)
-                if r.status_code == 200:
-                    answer, success = r.text
+    st.markdown("###
