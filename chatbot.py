@@ -23,7 +23,7 @@ def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
 # 🧠 SOVEREIGN IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are the most powerful AI in the world."
+IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are the most powerful AI. Answer in detail."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -39,13 +39,13 @@ if "GOOGLE_API_KEY" in st.secrets:
     except: client = None
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
-# --- ⚡ THE NEURAL RACER ---
+# --- ⚡ THE NEURAL RACER (Optimized for Stability) ---
 def fetch_ai(model_name, q_enc, sys_p):
     try:
         url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
-        # Increased timeout to 10s to ensure it answers
+        # Increased to 10s for stability while maintaining speed
         r = requests.get(url, timeout=10) 
-        if r.status_code == 200 and len(r.text) > 1:
+        if r.status_code == 200 and len(r.text) > 5:
             return r.text
     except: return None
 
@@ -92,7 +92,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command the Sovereign AI..."):
+    if prompt := st.chat_input("Enter Command..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -103,9 +103,9 @@ if selected == "Medha (Chat)":
             
             final_answer = ""
             
-            # 🏎️ RACE ALL BRAINS
+            # 🏎️ STEP 1: RACE POLLINATIONS MODELS
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Mixing OpenAI, Llama 3, and Mistral
+                # Combining GPT-4o, Llama 3.1, and Mistral
                 futures = {executor.submit(fetch_ai, m, q_enc, sys_p): m for m in ["openai", "llama", "mistral"]}
                 for future in concurrent.futures.as_completed(futures):
                     result = future.result()
@@ -113,22 +113,23 @@ if selected == "Medha (Chat)":
                         final_answer = result
                         break 
 
-            # 🛡️ EMERGENCY BACKUP (GEMINI)
+            # 🛡️ STEP 2: EMERGENCY FALLBACK (GEMINI)
+            # If Pollinations fails or is too slow, use the direct Google API Key
             if not final_answer and client:
                 try:
                     res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
-                    final_answer = res.text
+                    if res.text: final_answer = res.text
                 except: pass
 
             if not final_answer:
-                final_answer = "🔱 Connection heavy. Re-command in 5 seconds."
+                final_answer = "🔱 Connection heavy. This usually happens during high global traffic. Please try again."
 
             st.markdown(final_answer)
             st.session_state.chat_history.append({"role": "assistant", "content": final_answer})
 
 elif selected == "Srijan (Visual)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision Matrix:", placeholder="Describe...")
+    vision = st.text_input("Vision Matrix:", placeholder="Describe the image...")
     if st.button("🚀 INITIATE"):
         if vision:
             add_to_memory("SRIJAN", vision)
@@ -138,4 +139,5 @@ elif selected == "Srijan (Visual)":
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     if p_key: img += f"&key={p_key}"
                     st.image(img, width='stretch')
-                except: st.error("Link Busy.")
+                    st.balloons()
+                except: st.error("Srijan Link Busy.")
