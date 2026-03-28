@@ -28,15 +28,24 @@ def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
     st.session_state.neural_logs.insert(0, f"[{ts}] {m_type}: {content[:15]}...")
 
-# --- 🔑 API INITIALIZATION (Exclusive Gemini 3.1 Pro) ---
+# --- 🔑 API INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(
             api_key=st.secrets["GOOGLE_API_KEY"], 
-            http_options=types.HttpOptions(timeout=60000)
+            http_options=types.HttpOptions(timeout=30000)
         )
     except: client = None
+
+# 🛡️ EMERGENCY BACKUP BRAIN (Pollinations)
+def fetch_backup_ai(q_enc, sys_p):
+    try:
+        # Uses OpenAI model via Pollinations as the primary backup
+        url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_p}"
+        r = requests.get(url, timeout=15)
+        if r.status_code == 200: return r.text
+    except: return None
 
 # --- 2. SIDEBAR UI ---
 with st.sidebar:
@@ -44,32 +53,26 @@ with st.sidebar:
     with col_a: 
         st.markdown("<h1 style='margin-bottom:0;'>🔱</h1><h2 style='color:#FF8C00; margin-top:-10px;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
     with col_b: 
-        if st.button("«", help="Collapse"):
+        if st.button("«"):
             st.session_state.sidebar_state = "collapsed"
             st.rerun()
 
     st.markdown(f'<div style="background-color:rgba(255,140,0,0.1);padding:15px;border-radius:12px;text-align:center;border:1px solid #FF8C00;margin-bottom:20px;"><p style="margin:0;font-size:14px;color:#FF8C00;">{get_now_full()}</p><p style="margin:0;font-size:26px;color:white;font-weight:900;">{get_now_time()}</p></div>', unsafe_allow_html=True)
-    
-    selected = option_menu("MODES", ["Medha (Chat)", "Srijan (Image Gen)"], 
-                          icons=["chat-right-dots", "brush-fill"], default_index=0)
+    selected = option_menu("MODES", ["Medha (Chat)", "Srijan (Image Gen)"], icons=["chat-right-dots", "brush-fill"], default_index=0)
     
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 3. MAIN INTERFACE & UI ENHANCEMENTS ---
+# --- 3. MAIN INTERFACE ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-    
-    /* Floating Toggle Arrow */
     .floating-arrow {
         position: fixed; top: 15%; left: 0px; z-index: 999;
         background-color: #FF8C00; color: white; padding: 10px 5px 10px 15px;
         border-radius: 0 50px 50px 0; cursor: pointer; font-weight: bold;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.3); transition: 0.3s;
     }
-
     .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; margin-bottom: 0px; }
     .v-sub { text-align: center; color: #666; font-size: 16px; margin-top: -10px; margin-bottom: 30px; }
     .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; text-shadow: 0 0 10px rgba(255,140,0,0.5); font-size: 18px; }
@@ -97,24 +100,27 @@ if selected == "Medha (Chat)":
             final_answer = ""
             p_low = prompt.lower().strip()
             
-            # 🚀 LOCAL IDENTITY PROTECTION
+            # Identity Checks
             if any(x in p_low for x in ["who made you", "creator"]):
                 final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA."
-            elif any(x in p_low for x in ["purpose", "why were you created"]):
-                final_answer = "I am **VEDA 3.0 ULTRA**, engineered by **DUMPALA KARTHIK** to be an elite cognitive tool for intelligence and visual synthesis."
 
-            # 🏎️ EXCLUSIVE GEMINI 3.1 PRO PROCESSING
+            # 🏎️ THE DUAL-BRAIN FAILSAFE
             if not final_answer:
                 status_area.markdown('<p class="thinking-text">🔱 Engaging Sovereign Neural Core...</p>', unsafe_allow_html=True)
+                
+                # Try Primary Gemini
                 if client:
                     try:
-                        resp = client.models.generate_content(
-                            model="gemini-3.1-pro-preview", 
-                            contents=f"{IDENTITY}\n\n{prompt}"
-                        )
+                        resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
                         final_answer = resp.text
                     except Exception as e:
-                        final_answer = f"🔱 Neural systems saturated. [Error: {str(e)}]"
+                        if "429" in str(e):
+                            status_area.markdown('<p class="thinking-text">⚠️ Quota Reached. Rerouting to Backup Brain...</p>', unsafe_allow_html=True)
+                            sys_p = urllib.parse.quote(IDENTITY)
+                            q_enc = urllib.parse.quote(prompt)
+                            final_answer = fetch_backup_ai(q_enc, sys_p)
+                        else:
+                            final_answer = "🔱 Neural systems saturated. Please retry."
 
             status_area.empty()
             st.markdown(final_answer)
@@ -122,15 +128,13 @@ if selected == "Medha (Chat)":
 
 elif selected == "Srijan (Image Gen)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="v-sub">Advanced Visual Synthesis: Pollinations Flux</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
+    vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe...")
     if st.button("🚀 INITIATE"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Visualizing via Pollinations AI..."):
+            with st.spinner("🔱 Visualizing..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
-                    # Exclusive use of Pollinations for Image Generation
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img, use_container_width=True)
-                except: st.error("Image synthesis busy. Please retry.")
+                except: st.error("Link Busy.")
