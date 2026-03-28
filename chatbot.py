@@ -8,7 +8,7 @@ import pytz
 from streamlit_option_menu import option_menu
 import time
 
-# --- 1. SESSION & TIME ---
+# --- 1. CORE CONFIG ---
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 ist = pytz.timezone('Asia/Kolkata')
 
@@ -21,27 +21,21 @@ def get_greeting():
 
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
-# 🧠 THE SOVEREIGN IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
-
-# --- 2. THE INFINITE NEURAL CLUSTER (7-Model Chain) ---
-def call_neural_cluster(prompt, identity):
-    """Try 7 of the world's most powerful free models in a chain."""
-    # Expanded list to include Llama 3.3 and Qwen for zero-fail performance
-    models = ["claude", "searchgpt", "openai", "llama", "qwen", "mistral", "p1"]
+# --- 2. THE APEX CLUSTER (8-Model Failover) ---
+def call_apex_cluster(prompt, identity):
+    """The absolute fail-safe: tried in order of speed and stability."""
+    # DeepSeek and Groq-powered models are now prioritized for speed
+    models = ["deepseek", "claude", "searchgpt", "openai", "llama", "qwen", "mistral"]
     q_enc = urllib.parse.quote(prompt)
     sys_p = urllib.parse.quote(identity)
     
     for model in models:
         try:
             url = f"https://text.pollinations.ai/{q_enc}?model={model}&system={sys_p}"
-            r = requests.get(url, timeout=10) # Fast 10s check per brain
-            
-            # If the brain is healthy and not reporting a Queue error
-            if r.status_code == 200 and "Queue full" not in r.text and "error" not in r.text.lower():
+            r = requests.get(url, timeout=8) # Ultra-fast 8s timeout to keep things moving
+            if r.status_code == 200 and "Queue full" not in r.text and len(r.text) > 2:
                 return r.text
-        except:
-            continue
+        except: continue
     return None
 
 # --- 3. LOGIN PHASE ---
@@ -66,10 +60,10 @@ with st.sidebar:
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 5. MAIN INTERFACE ---
+# --- 5. MAIN UI ---
 st.markdown("""<style>header {visibility: hidden;} .v-title { font-size: 55px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; } .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; } @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }</style>""", unsafe_allow_html=True)
 
-# 🔑 PRIMARY API (Gemini 3.1 Pro)
+# API PRIMARY
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"], http_options=types.HttpOptions(timeout=8000))
@@ -77,12 +71,11 @@ if "GOOGLE_API_KEY" in st.secrets:
 
 if selected == "Medha (Chat)":
     st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
-
     if "chat_history" not in st.session_state: st.session_state.chat_history = []
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command VEDA..."):
+    if prompt := st.chat_input("Command the Sovereign Core..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
@@ -90,7 +83,7 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # STAGE 1: GEMINI
+            # --- PHASE 1: GEMINI 3.1 PRO ---
             status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
             if client:
                 try:
@@ -98,18 +91,18 @@ if selected == "Medha (Chat)":
                     final_res = resp.text
                 except: pass
             
-            # STAGE 2: 7-BRAIN CLUSTER (Claude, Llama, Qwen, etc.)
+            # --- PHASE 2: APEX CLUSTER (DeepSeek/Claude/Groq-Llama) ---
             if not final_res:
                 status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                final_res = call_neural_cluster(prompt, IDENTITY)
-                
-            # STAGE 3: ANALYSIS
+                final_res = call_apex_cluster(prompt, IDENTITY)
+            
+            # --- PHASE 3: ANALYSIS ---
             if final_res:
                 status.markdown('<p class="thinking-text">🔱 analysis....</p>', unsafe_allow_html=True)
                 time.sleep(0.3)
 
             status.empty()
-            if not final_res: final_res = "🔱 Sovereign systems under heavy load. Please retry in 5s."
+            if not final_res: final_res = "🔱 Neural corridors jammed. Re-attempting connection..."
             
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
