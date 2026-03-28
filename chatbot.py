@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="VEDA 3.0 ULTRA", 
     page_icon="🔱", 
     layout="wide", 
-    initial_sidebar_state="expanded" # Try to force it one last time
+    initial_sidebar_state="expanded"
 )
 
 ist = pytz.timezone('Asia/Kolkata')
@@ -31,7 +31,6 @@ def get_greeting():
     else: return "GOOD NIGHT"
 
 def clean_veda_text(text):
-    # Aggressive ad-shield logic
     bad_patterns = [r"🌸.*?🌸", r"Powered by.*?AI", r"Support our mission", r"Ad", r"free text APIs", r"Support Pollinations\.AI:"]
     for pattern in bad_patterns:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
@@ -45,13 +44,11 @@ st.markdown("""
     .v-sub { text-align: center; color: #666; font-size: 16px; margin-top: -10px; margin-bottom: 20px; }
     .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; }
     @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-    
-    /* Make the option menu look elite on main screen */
     .nav-container { max-width: 600px; margin: 0 auto 30px auto; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. LOGIN PHASE ---
+# --- 3. INTERFACE LOGIC ---
 if st.session_state.user_name is None:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -61,36 +58,71 @@ if st.session_state.user_name is None:
             if name_in:
                 st.session_state.user_name = name_in.strip()
                 st.rerun()
-    st.stop()
-
-# --- 4. MAIN INTERFACE (Now with Main-Screen Navigation) ---
-st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
-
-# 🔱 MAIN SCREEN NAVIGATION (This replaces the Sidebar menu so it NEVER fails)
-with st.container():
+else:
+    # --- HEADER & NAVIGATION ---
+    st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
+    
     st.markdown('<div class="nav-container">', unsafe_allow_html=True)
     selected = option_menu(
         None, ["Medha (Chat)", "Srijan (Image Gen)"], 
         icons=["chat-right-dots", "brush-fill"], 
-        menu_icon="cast", default_index=0, orientation="horizontal",
+        default_index=0, orientation="horizontal",
         styles={
             "container": {"padding": "0!important", "background-color": "#111", "border": "1px solid #FF8C00"},
-            "nav-link": {"font-size": "16px", "text-align": "center", "margin":"0px", "--hover-color": "#FF8C0033"},
             "nav-link-selected": {"background-color": "#FF8C00"},
         }
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 5. MODE LOGIC ---
-if selected == "Medha (Chat)":
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+    # --- MODE: CHAT ---
+    if selected == "Medha (Chat)":
+        for msg in st.session_state.chat_history:
+            with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command VEDA..."):
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            status = st.empty()
-            final_res = ""
-            status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>',
+        if prompt := st.chat_input("Command VEDA..."):
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            with st.chat_message("user"): st.markdown(prompt)
+            
+            with st.chat_message("assistant"):
+                status = st.empty()
+                final_res = ""
+                status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
+                
+                # Try Gemini 3.1 Pro
+                if "GOOGLE_API_KEY" in st.secrets:
+                    try:
+                        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+                        resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
+                        final_res = resp.text
+                    except: pass
+                
+                # Silent Rotation to Pollinations
+                if not final_res:
+                    status.markdown('<p class="thinking-text">🔱 rotating to pollination core....</p>', unsafe_allow_html=True)
+                    try:
+                        p_enc = urllib.parse.quote(prompt)
+                        i_enc = urllib.parse.quote(IDENTITY)
+                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model=openai&system={i_enc}", timeout=10)
+                        final_res = clean_veda_text(r.text)
+                    except: final_res = "🔱 Neural corridors congested. Please retry."
+
+                status.empty()
+                st.markdown(final_res)
+                st.session_state.chat_history.append({"role": "assistant", "content": final_res})
+
+    # --- MODE: IMAGES ---
+    elif selected == "Srijan (Image Gen)":
+        vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
+        if st.button("🚀 INITIATE"):
+            if vision:
+                with st.spinner("🔱 Visualizing..."):
+                    img_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(vision)}?width=1024&height=1024&nologo=true&model=flux"
+                    st.image(img_url, use_container_width=True)
+
+    # Sidebar reset backup
+    with st.sidebar:
+        st.markdown("<h3 style='color:#FF8C00;'>SYSTEM OPS</h3>", unsafe_allow_html=True)
+        if st.button("🗑️ Reset All Data"):
+            st.session_state.chat_history = []
+            st.session_state.user_name = None
+            st.rerun()
