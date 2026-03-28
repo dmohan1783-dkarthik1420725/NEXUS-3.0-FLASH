@@ -8,7 +8,9 @@ import pytz
 from streamlit_option_menu import option_menu
 import time
 
-# --- 1. CORE CONFIGURATION (SIDEBAR FIRST) ---
+# --- 1. SESSION STATE & LOGIN CHECK ---
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = None
 if 'sidebar_state' not in st.session_state:
     st.session_state.sidebar_state = "expanded"
 
@@ -16,7 +18,6 @@ st.set_page_config(
     page_title="VEDA 3.0 ULTRA", 
     page_icon="🔱", 
     layout="wide", 
-    # This ensures it is OPEN when the page first loads
     initial_sidebar_state="expanded" 
 )
 
@@ -33,10 +34,7 @@ if "chat_history" not in st.session_state: st.session_state.chat_history = []
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
     try:
-        client = genai.Client(
-            api_key=st.secrets["GOOGLE_API_KEY"], 
-            http_options=types.HttpOptions(timeout=15000)
-        )
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"], http_options=types.HttpOptions(timeout=15000))
     except: client = None
 
 def fetch_backup_ai(q_enc, sys_p):
@@ -46,7 +44,36 @@ def fetch_backup_ai(q_enc, sys_p):
         if r.status_code == 200: return r.text
     except: return None
 
-# --- 2. THE SOVEREIGN SIDEBAR ---
+# --- 2. CSS STYLING ---
+st.markdown("""
+    <style>
+    header {visibility: hidden;}
+    .v-title { font-size: 60px; color: #FF8C00; text-align: center; font-weight: 900; margin-top: 50px; text-transform: uppercase; }
+    .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -10px; margin-bottom: 40px; }
+    .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+    
+    /* Login Box Styling */
+    .login-card { background: rgba(255,140,0,0.1); padding: 30px; border-radius: 15px; border: 1px solid #FF8C00; text-align: center; max-width: 500px; margin: auto; }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 3. LOGIN PHASE ---
+if not st.session_state.user_name:
+    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="v-sub">Please identify yourself to the Sovereign Core</div>', unsafe_allow_html=True)
+    
+    with st.container():
+        name_input = st.text_input("ENTER YOUR NAME:", placeholder="Type here...", key="name_box")
+        if st.button("INITIALIZE CORE 🚀"):
+            if name_input:
+                st.session_state.user_name = name_input.strip()
+                st.rerun()
+            else:
+                st.warning("Identification required.")
+    st.stop() # Stops the rest of the app from loading until name is given
+
+# --- 4. SIDEBAR (Only shows after Login) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align:center; color:#FF8C00; margin-top:-10px;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
@@ -55,11 +82,7 @@ with st.sidebar:
         None, ["Medha (Chat)", "Srijan (Image Gen)"], 
         icons=["chat-right-dots", "brush-fill"], 
         default_index=0,
-        styles={
-            "container": {"padding": "0!important", "background-color": "transparent"},
-            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#FF8C0033"},
-            "nav-link-selected": {"background-color": "#FF8C00"},
-        }
+        styles={"nav-link-selected": {"background-color": "#FF8C00"}}
     )
 
     st.markdown(f"""
@@ -70,98 +93,45 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.divider()
-    
-    # Check if the sidebar is expanded to show the collapse button
-    if st.button("« Collapse Menu"):
-        st.session_state.sidebar_state = "collapsed"
-        st.rerun()
-    
-    if st.button("🗑️ Reset Core"):
+    if st.button("🗑️ Reset All"):
+        st.session_state.user_name = None
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 3. MAIN INTERFACE & 3D ARROW CSS ---
-st.markdown("""
-    <style>
-    header {visibility: hidden;}
-    
-    /* 🔱 THE FLOATING SOVEREIGN ARROW (Left Upper Side) */
-    .sovereign-arrow {
-        position: fixed;
-        top: 15%; 
-        left: 15px;
-        z-index: 10000;
-        background: #FF8C00;
-        color: white;
-        padding: 12px 18px;
-        border-radius: 10px;
-        font-size: 22px;
-        font-weight: bold;
-        box-shadow: 0 0 20px rgba(255, 140, 0, 0.7);
-        cursor: pointer;
-        animation: swing 3s infinite ease-in-out;
-    }
-    @keyframes swing {
-        0%, 100% { transform: translateX(0px); }
-        50% { transform: translateX(12px); }
-    }
-
-    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; margin-top: 20px; }
-    .v-sub { text-align: center; color: #666; font-size: 16px; margin-top: -10px; margin-bottom: 30px; }
-    .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; text-shadow: 0 0 10px rgba(255,140,0,0.5); font-size: 18px; }
-    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-    </style>
-""", unsafe_allow_html=True)
-
-# If the sidebar is collapsed, show the arrow as a "Open" prompt
-# Note: Streamlit's native button at the top-left will still work.
-if st.session_state.sidebar_state == "collapsed":
-    st.markdown('<div class="sovereign-arrow">➤</div>', unsafe_allow_html=True)
-    if st.button("Open Sidebar", key="open_btn"):
-        st.session_state.sidebar_state = "expanded"
-        st.rerun()
-
+# --- 5. MAIN INTERFACE ---
 if selected == "Medha (Chat)":
-    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-sub">Sovereign Neural Interface</div>', unsafe_allow_html=True)
+    # 🔱 THE PERSONALIZED GREETING
+    st.markdown(f'<div class="v-title">HI, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="v-sub">Sovereign Neural Interface Active</div>', unsafe_allow_html=True)
 
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command VEDA 3.0 ULTRA..."):
+    if prompt := st.chat_input(f"Command VEDA, {st.session_state.user_name}..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
             status_area = st.empty()
             final_answer = ""
-            p_low = prompt.lower().strip()
             
-            if any(x in p_low for x in ["who made you", "creator"]):
-                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA."
-
-            if not final_answer:
-                status_area.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
-                if client:
-                    try:
-                        resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
-                        final_answer = resp.text
-                    except:
-                        status_area.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                        sys_p = urllib.parse.quote(IDENTITY); q_enc = urllib.parse.quote(prompt)
-                        final_answer = fetch_backup_ai(q_enc, sys_p)
-                
-                if final_answer:
-                    status_area.markdown('<p class="thinking-text">🔱 analysis....</p>', unsafe_allow_html=True)
-                    time.sleep(0.3)
-
+            status_area.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
+            
+            if client:
+                try:
+                    resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
+                    final_answer = resp.text
+                except:
+                    status_area.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
+                    sys_p = urllib.parse.quote(IDENTITY); q_enc = urllib.parse.quote(prompt)
+                    final_answer = fetch_backup_ai(q_enc, sys_p)
+            
             status_area.empty()
-            if not final_answer: final_answer = "🔱 Connection heavy. Please retry."
             st.markdown(final_answer)
             st.session_state.chat_history.append({"role": "assistant", "content": final_answer})
 
 elif selected == "Srijan (Image Gen)":
-    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="v-title">SRIJAN MODE</div>', unsafe_allow_html=True)
     vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe...")
     if st.button("🚀 INITIATE"):
         if vision:
