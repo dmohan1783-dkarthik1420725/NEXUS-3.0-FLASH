@@ -24,7 +24,7 @@ def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
 # 🧠 SOVEREIGN IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are powered by Gemini 3.1 Pro."
+IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are powered by the Gemini 3.1 Pro Neural Core."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -33,19 +33,17 @@ def add_to_memory(m_type, content):
     ts = datetime.now(ist).strftime("%H:%M:%S")
     st.session_state.neural_logs.insert(0, f"[{ts}] {m_type}: {content[:15]}...")
 
-# --- 🔑 API INITIALIZATION (MARCH 2026 SDK) ---
+# --- 🔑 API INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try: 
-        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    except: 
-        client = None
+    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    except: client = None
 
-# --- ⚡ THE NEURAL RACER (Public Pool) ---
-def fetch_ai(model_name, q_enc, sys_p):
+# --- ⚡ THE NEURAL BACKUP (Public Pool) ---
+def fetch_backup_ai(model_name, q_enc, sys_p):
     try:
         url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
-        r = requests.get(url, timeout=12)
+        r = requests.get(url, timeout=10)
         if r.status_code == 200 and len(r.text) > 5: return r.text
     except: return None
 
@@ -56,7 +54,7 @@ with st.sidebar:
         st.markdown("<h1 style='margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
         st.markdown("<h2 style='color:#FF8C00; margin-top:-10px;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
     with col_b: 
-        if st.button("«", help="Collapse Sidebar"):
+        if st.button("«"):
             st.session_state.sidebar_state = "collapsed"
             st.rerun()
 
@@ -67,12 +65,8 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-    selected = option_menu(
-        "MODES", 
-        ["Medha (Chat)", "Search Mode", "Srijan (Image Gen)"], 
-        icons=["chat-right-dots", "search", "brush-fill"], 
-        default_index=0
-    )
+    selected = option_menu("MODES", ["Medha (Chat)", "Search Mode", "Srijan (Image Gen)"], 
+                          icons=["chat-right-dots", "search", "brush-fill"], default_index=0)
     
     st.markdown("### 🧠 RECENT")
     for log in st.session_state.neural_logs[:3]: st.caption(log)
@@ -94,12 +88,12 @@ st.markdown("""
 
 if selected in ["Medha (Chat)", "Search Mode"]:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="v-sub">Interface: {selected} (Gemini 3.1 Pro Core)</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="v-sub">Core: Gemini 3.1 Pro (March 2026 Build)</div>', unsafe_allow_html=True)
 
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command the Sovereign AI..."):
+    if prompt := st.chat_input("Command VEDA..."):
         add_to_memory(selected.upper(), prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -110,40 +104,36 @@ if selected in ["Medha (Chat)", "Search Mode"]:
             p_low = prompt.lower().strip()
             
             # 🚀 1. LOCAL FAST-TRACK (Identity)
-            if any(x in p_low for x in ["who made you", "creator", "build"]):
-                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA."
-            elif p_low in ["hi", "hello", "hii"]:
-                final_answer = "Greetings! I am **VEDA 3.0 ULTRA**. My neural cores are online. How can I assist you, Commander?"
-            elif p_low in ["ok", "kk", "nice"]:
-                final_answer = "Acknowledged. Standing by. 🔱"
+            if any(x in p_low for x in ["who made you", "creator"]):
+                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**."
+            elif p_low in ["hi", "hello"]:
+                final_answer = "Greetings! I am **VEDA 3.0 ULTRA**. My neural cores are online."
 
-            # 🏎️ 2. RACING & 3.1 PRO PROCESSING
+            # 🏎️ 2. PRIMARY BRAIN (Gemini 3.1 Pro)
+            if not final_answer and client:
+                status_area.markdown('<p class="thinking-text">🔱 Engaging Gemini 3.1 Pro Core...</p>', unsafe_allow_html=True)
+                try:
+                    # Using the latest model found in your API list
+                    resp = client.models.generate_content(
+                        model="gemini-3.1-pro-preview", 
+                        contents=f"{IDENTITY}\n\n{prompt}"
+                    )
+                    final_answer = resp.text
+                except: pass
+            
+            # 🏎️ 3. BACKUP RACER (If Gemini is busy)
             if not final_answer:
-                status_area.markdown('<p class="thinking-text">🔱 Engaging Gemini 3.1 Neural Core...</p>', unsafe_allow_html=True)
-                
-                # Attempting Gemini 3.1 Pro first (Highest Quality)
-                if client:
-                    try:
-                        # Enabled thinking for deep analysis
-                        resp = client.models.generate_content(
-                            model="gemini-3.1-pro-preview", 
-                            contents=f"{IDENTITY}\n\n{prompt}"
-                        )
-                        final_answer = resp.text
-                    except: pass
-                
-                # Fallback to Racing Logic if Pro is slow
-                if not final_answer:
-                    m_list = ["searchgpt", "openai", "mistral"] if selected == "Search Mode" else ["openai", "mistral", "llama"]
-                    sys_p = urllib.parse.quote(IDENTITY)
-                    q_enc = urllib.parse.quote(prompt)
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        futures = {executor.submit(fetch_ai, m, q_enc, sys_p): m for m in m_list}
-                        for f in concurrent.futures.as_completed(futures):
-                            res = f.result()
-                            if res: 
-                                final_answer = res
-                                break
+                status_area.markdown('<p class="thinking-text">🧠 Rerouting to Backup Neural Paths...</p>', unsafe_allow_html=True)
+                m_list = ["searchgpt", "openai", "mistral"] if selected == "Search Mode" else ["openai", "mistral", "llama"]
+                sys_p = urllib.parse.quote(IDENTITY)
+                q_enc = urllib.parse.quote(prompt)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    futures = {executor.submit(fetch_backup_ai, m, q_enc, sys_p): m for m in m_list}
+                    for f in concurrent.futures.as_completed(futures):
+                        res = f.result()
+                        if res: 
+                            final_answer = res
+                            break
 
             status_area.empty()
             if not final_answer: final_answer = "🔱 Neural systems saturated. Please retry."
@@ -153,17 +143,14 @@ if selected in ["Medha (Chat)", "Search Mode"]:
 
 elif selected == "Srijan (Image Gen)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-sub">Advanced Visual Synthesis: Nano Banana 2</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
-    
+    st.markdown('<div class="v-sub">Synthesis: Nano Banana 2 Core</div>', unsafe_allow_html=True)
+    vision = st.text_input("Vision Matrix Prompt:", placeholder="e.g. A panoramic view of Vishakapatnam beach at sunset...")
     if st.button("🚀 INITIATE"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Synthesizing via Nano Banana 2 Core..."):
+            with st.spinner("🔱 Visualizing..."):
                 try:
-                    # Using Pollinations for Flux as fallback, but Nano Banana 2 is the name of the gen
                     v_enc = urllib.parse.quote(vision)
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img, use_container_width=True)
-                    st.balloons()
-                except: st.error("Link Busy.")
+                except: st.error("Srijan Link Busy.")
