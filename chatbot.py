@@ -7,6 +7,7 @@ from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
 import time
+import re
 
 # --- 1. SOVEREIGN CONFIG & IDENTITY ---
 IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
@@ -14,12 +15,7 @@ IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA K
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
 
-st.set_page_config(
-    page_title="VEDA 3.0 ULTRA", 
-    page_icon="🔱", 
-    layout="wide", 
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 ist = pytz.timezone('Asia/Kolkata')
 def get_greeting():
@@ -38,7 +34,7 @@ if st.session_state.user_name is None:
     st.markdown('<div class="v-sub">Sovereign Core Identification Required</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        name_in = st.text_input("IDENTIFY YOURSELF:", placeholder="Enter name...")
+        name_in = st.text_input("IDENTIFY YOURSELF:", placeholder="Commander Name...")
         if st.button("INITIALIZE SYSTEM 🚀", use_container_width=True):
             if name_in:
                 st.session_state.user_name = name_in.strip()
@@ -48,12 +44,7 @@ if st.session_state.user_name is None:
 # --- 4. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], 
-                          icons=["chat-right-dots", "brush-fill"], default_index=0, 
-                          styles={"nav-link-selected": {"background-color": "#FF8C00"}})
-    
-    st.markdown(f'<div style="text-align:center; color:#FF8C00; border:1px solid #FF8C00; padding:10px; border-radius:10px; margin-top:20px;">{datetime.now(ist).strftime("%I:%M %p")}<br>{datetime.now(ist).strftime("%A, %d %B %Y")}</div>', unsafe_allow_html=True)
-    
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], icons=["chat-right-dots", "brush-fill"], default_index=0, styles={"nav-link-selected": {"background-color": "#FF8C00"}})
     st.divider()
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
@@ -62,7 +53,6 @@ with st.sidebar:
 # --- 5. MAIN INTERFACE ---
 if selected == "Medha (Chat)":
     st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-sub">Neural Interface: VEDA 3.0 VERSION (with Clean Auto-Rotation)</div>', unsafe_allow_html=True)
     
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
@@ -75,7 +65,7 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # --- PHASE 1: GEMINI 3.1 PRO ---
+            # PHASE 1: GEMINI 3.1 PRO
             status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
             if "GOOGLE_API_KEY" in st.secrets:
                 try:
@@ -84,33 +74,23 @@ if selected == "Medha (Chat)":
                     final_res = resp.text
                 except: pass
             
-            # --- PHASE 2: SILENT ROTATION (Cleaned) ---
+            # PHASE 2: CLEAN ROTATION CLUSTER
             if not final_res:
                 status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                for model in ["openai", "claude", "mistral"]:
+                for model in ["deepseek", "openai", "claude"]:
                     try:
-                        p_enc = urllib.parse.quote(prompt)
-                        i_enc = urllib.parse.quote(IDENTITY)
-                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=10)
+                        p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
+                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=8)
                         if r.status_code == 200 and "Queue full" not in r.text:
-                            raw_text = r.text
-                            # 🛡️ AD-REMOVAL LOGIC
-                            bad_words = [
-                                "Support Pollinations.AI:", 
-                                "🌸 Ad 🌸", 
-                                "Powered by Pollinations.AI", 
-                                "Support our mission",
-                                "keep AI accessible for everyone"
-                            ]
-                            for word in bad_words:
-                                raw_text = raw_text.replace(word, "")
-                            
-                            final_res = raw_text.strip()
-                            break
+                            # 🛡️ SOVEREIGN AD-WIPE (Enhanced)
+                            clean_text = re.sub(r'🌸.*?🌸|Powered by.*?AI|Support our mission.*?everyone|Ad|free text APIs', '', r.text, flags=re.IGNORECASE)
+                            if len(clean_text.strip()) > 10:
+                                final_res = clean_text.strip()
+                                break
                     except: continue
 
             status.empty()
-            if not final_res: final_res = "🔱 Neural pathways under maintenance. Please retry in 5s."
+            if not final_res: final_res = "🔱 Neural corridors congested. Please retry."
             
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
