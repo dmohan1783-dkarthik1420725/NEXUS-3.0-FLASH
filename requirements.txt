@@ -3,4 +3,3 @@ google-genai==1.68.0
 requests==2.33.0
 pytz==2026.1
 streamlit-option-menu==0.4.0
-pillow==12.1.1
