@@ -6,7 +6,6 @@ from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
 import concurrent.futures
-import time
 
 # --- 1. CONFIGURATION ---
 if 'sidebar_state' not in st.session_state:
@@ -17,8 +16,8 @@ st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide",
 ist = pytz.timezone('Asia/Kolkata')
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 SOVEREIGN CORE IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. Answer with extreme power and detail."
+# 🧠 THE SOVEREIGN IDENTITY (Hard-coded for absolute speed)
+IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -38,7 +37,7 @@ p_key = st.secrets.get("POLLINATIONS_KEY", "")
 def fetch_ai(model_name, q_enc, sys_p):
     try:
         url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
-        r = requests.get(url, timeout=15) # Increased timeout for stability
+        r = requests.get(url, timeout=12) # Balanced timeout
         if r.status_code == 200 and len(r.text) > 1: return r.text
     except: return None
 
@@ -75,15 +74,17 @@ if selected == "Medha (Chat)":
         
         with st.chat_message("assistant"):
             final_answer = ""
-            p_lower = prompt.lower()
+            p_lower = prompt.lower().strip()
             
-            # 🚀 INSTANT LOCAL FAST-TRACK (Bypasses Internet for Bio/Greeting)
+            # 🚀 1. LOCAL FAST-TRACK (No Internet/API needed)
             if any(word in p_lower for word in ["who made you", "creator", "build"]):
-                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA, the most powerful AI interface."
-            elif p_lower in ["hi", "hello", "hey"]:
+                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA."
+            elif p_lower in ["hi", "hello", "hey", "hii"]:
                 final_answer = "Greetings! I am **VEDA 3.0 ULTRA**. My neural cores are online. How can I assist you, Commander?"
+            elif p_lower in ["ok", "kk", "okay", "nice", "good", "wow"]:
+                final_answer = "Acknowledged. Standing by for your next command. 🔱"
 
-            # 🏎️ IF NOT LOCAL, ATTEMPT TRIPLE-BRAIN RACE
+            # 🏎️ 2. NEURAL RACE (For actual questions)
             if not final_answer:
                 sys_p = urllib.parse.quote(IDENTITY)
                 q_enc = urllib.parse.quote(prompt)
@@ -95,14 +96,15 @@ if selected == "Medha (Chat)":
                             final_answer = res
                             break
                 
-                # 🛡️ THE FAIL-SAFE: DIRECT GEMINI TRIGGER (If race fails or is slow)
+                # 🛡️ 3. PRIVATE BACKUP (Gemini)
                 if not final_answer and client:
                     try:
                         resp = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
                         final_answer = resp.text
                     except: pass
 
-            if not final_answer: final_answer = "🔱 Neural systems saturated. Please try re-commanding in 3 seconds."
+            if not final_answer: 
+                final_answer = "🔱 Neural systems saturated. Please try re-commanding in 3 seconds."
             
             st.markdown(final_answer)
             st.session_state.chat_history.append({"role": "assistant", "content": final_answer})
@@ -118,5 +120,5 @@ elif selected == "Srijan (Visual)":
                     v_enc = urllib.parse.quote(vision)
                     img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
                     if p_key: img += f"&key={p_key}"
-                    st.image(img, width='stretch')
+                    st.image(img, use_container_width=True)
                 except: st.error("Link Busy.")
