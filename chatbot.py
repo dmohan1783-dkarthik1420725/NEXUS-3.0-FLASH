@@ -34,7 +34,7 @@ if st.session_state.user_name is None:
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        name_in = st.text_input("ENTER COMMANDER NAME:", placeholder="Type name and press Enter...")
+        name_in = st.text_input("IDENTIFY YOURSELF:", placeholder="Enter name...")
         if st.button("INITIALIZE SYSTEM 🚀", use_container_width=True):
             if name_in:
                 st.session_state.user_name = name_in.strip()
@@ -52,12 +52,13 @@ else:
             st.rerun()
 
     if selected == "Medha (Chat)":
+        # 🔱 It is now 9:04 PM IST - The app will correctly say GOOD NIGHT
         st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
         
         for msg in st.session_state.chat_history:
             with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-        if prompt := st.chat_input("Command VEDA..."):
+        if prompt := st.chat_input(f"Command VEDA, {st.session_state.user_name}..."):
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with st.chat_message("user"): st.markdown(prompt)
             
@@ -65,20 +66,23 @@ else:
                 status = st.empty()
                 final_res = ""
                 
-                # --- STAGE 1: GEMINI 3.1 PRO (Primary) ---
+                # --- 🏎️ STEP 1: ATTEMPT GEMINI 3.1 PRO (PRIMARY) ---
                 status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
                 if "GOOGLE_API_KEY" in st.secrets:
                     try:
                         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                         resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
                         final_res = resp.text
-                    except: pass
+                    except:
+                        # SILENT ROTATION: If Gemini fails, we immediately move to Step 2
+                        pass
                 
-                # --- STAGE 2: THE APEX CLUSTER (DeepSeek, Claude, Llama, Qwen) ---
+                # --- 🛡️ STEP 2: SILENT ROTATION TO POLLINATIONS AI (BACKUP) ---
                 if not final_res:
                     status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                    # DeepSeek and Qwen are prioritized for high-speed bypass
-                    for model in ["deepseek", "qwen", "claude", "mistral", "llama"]:
+                    # We try the powerful OpenAI model within Pollinations first
+                    models = ["openai", "mistral", "claude"]
+                    for model in models:
                         try:
                             p_enc = urllib.parse.quote(prompt)
                             i_enc = urllib.parse.quote(IDENTITY)
@@ -86,18 +90,21 @@ else:
                             if r.status_code == 200 and "Queue full" not in r.text:
                                 final_res = r.text
                                 break
-                        except: continue
+                        except:
+                            continue
 
                 status.empty()
-                if not final_res: final_res = "🔱 Neural pathways congested. Re-routing through secondary core. Please retry in 5s."
+                # Final fail-safe if the entire internet is congested
+                if not final_res: final_res = "🔱 Neural corridors congested. Please retry in 5s."
+                
                 st.markdown(final_res)
                 st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
     elif selected == "Srijan (Image Gen)":
         st.markdown('<div class="v-title">SRIJAN MODE</div>', unsafe_allow_html=True)
-        vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe...")
+        vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
         if st.button("🚀 INITIATE"):
             if vision:
-                with st.spinner("🔱 Visualizing..."):
+                with st.spinner("🔱 Visualizing via Pollinations AI..."):
                     img_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(vision)}?width=1024&height=1024&nologo=true&model=flux"
                     st.image(img_url, use_container_width=True)
