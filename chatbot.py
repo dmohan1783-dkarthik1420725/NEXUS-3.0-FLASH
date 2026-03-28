@@ -40,7 +40,6 @@ if st.session_state.user_name is None:
                 st.session_state.user_name = name_in.strip()
                 st.rerun()
 else:
-    # --- SIDEBAR ---
     with st.sidebar:
         st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
         selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], 
@@ -52,7 +51,6 @@ else:
             st.session_state.chat_history = []
             st.rerun()
 
-    # --- MAIN CONTENT ---
     if selected == "Medha (Chat)":
         st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
         
@@ -61,14 +59,13 @@ else:
 
         if prompt := st.chat_input("Command VEDA..."):
             st.session_state.chat_history.append({"role": "user", "content": prompt})
-            
             with st.chat_message("user"): st.markdown(prompt)
             
             with st.chat_message("assistant"):
                 status = st.empty()
                 final_res = ""
                 
-                # STAGE 1: GEMINI
+                # --- STAGE 1: GEMINI 3.1 PRO (Primary) ---
                 status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
                 if "GOOGLE_API_KEY" in st.secrets:
                     try:
@@ -77,22 +74,22 @@ else:
                         final_res = resp.text
                     except: pass
                 
-                # STAGE 2: CLUSTER BACKUP (FIXED SYNTAX)
+                # --- STAGE 2: THE APEX CLUSTER (DeepSeek, Claude, Llama, Qwen) ---
                 if not final_res:
                     status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                    for model in ["mistral", "claude", "openai"]:
+                    # DeepSeek and Qwen are prioritized for high-speed bypass
+                    for model in ["deepseek", "qwen", "claude", "mistral", "llama"]:
                         try:
                             p_enc = urllib.parse.quote(prompt)
                             i_enc = urllib.parse.quote(IDENTITY)
-                            target_url = f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}"
-                            r = requests.get(target_url, timeout=8)
+                            r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=10)
                             if r.status_code == 200 and "Queue full" not in r.text:
                                 final_res = r.text
                                 break
                         except: continue
 
                 status.empty()
-                if not final_res: final_res = "🔱 Neural pathways congested. Please retry."
+                if not final_res: final_res = "🔱 Neural pathways congested. Re-routing through secondary core. Please retry in 5s."
                 st.markdown(final_res)
                 st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
