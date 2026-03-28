@@ -6,6 +6,7 @@ from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
 import concurrent.futures
+import time
 
 # --- 1. CONFIGURATION ---
 if 'sidebar_state' not in st.session_state:
@@ -16,8 +17,8 @@ st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide",
 ist = pytz.timezone('Asia/Kolkata')
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 THE SOVEREIGN CORE IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are the most powerful AI. Respond with elite speed."
+# 🧠 SOVEREIGN CORE IDENTITY
+IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. Answer with extreme detail and power."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -33,13 +34,16 @@ if "GOOGLE_API_KEY" in st.secrets:
     except: client = None
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
-# --- ⚡ THE NEURAL RACER ---
+# --- ⚡ THE NEURAL RACER (With Auto-Retry) ---
 def fetch_ai(model_name, q_enc, sys_p):
-    try:
-        url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
-        r = requests.get(url, timeout=12) # High stability timeout
-        if r.status_code == 200 and len(r.text) > 1: return r.text
-    except: return None
+    for attempt in range(2): # Try twice if saturated
+        try:
+            url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
+            r = requests.get(url, timeout=12)
+            if r.status_code == 200 and len(r.text) > 1: return r.text
+            time.sleep(1) # Wait 1 second before retrying
+        except: continue
+    return None
 
 # --- 2. SIDEBAR ---
 with st.sidebar:
@@ -76,17 +80,20 @@ if selected == "Medha (Chat)":
             final_answer = ""
             p_lower = prompt.lower()
             
-            # 🚀 INSTANT LOCAL FAST-TRACK (No Internet Needed)
-            if "who made you" in p_lower or "creator" in p_lower or "develop" in p_lower:
-                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA, the most powerful AI interface."
-            elif p_lower in ["hi", "hello", "hey"]:
-                final_answer = "Greetings! I am **VEDA 3.0 ULTRA**. My neural cores are online. How can I assist you, Commander?"
-            
+            # 🚀 INSTANT LOCAL FAST-TRACK
+            if any(word in p_lower for word in ["who made you", "creator", "develop", "build"]):
+                final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA, the world's most powerful AI interface."
+            elif any(word in p_lower for word in ["hi", "hello", "hey"]):
+                final_answer = "Greetings! I am **VEDA 3.0 ULTRA**. My neural cores are online and stabilized. How can I assist you, Commander?"
+            elif "and how" in p_lower:
+                final_answer = "**DUMPALA KARTHIK** built me using a Quad-Core Neural architecture, integrating Python, Streamlit, and the world's most advanced LLMs like GPT-4o and Gemini 3.0."
+
             # 🏎️ IF NOT LOCAL, RACE ALL BRAINS
             if not final_answer:
                 sys_p = urllib.parse.quote(IDENTITY)
                 q_enc = urllib.parse.quote(prompt)
                 with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # Racing OpenAI, Mistral, and Llama
                     futures = {executor.submit(fetch_ai, m, q_enc, sys_p): m for m in ["openai", "mistral", "llama"]}
                     for future in concurrent.futures.as_completed(futures):
                         res = future.result()
@@ -94,14 +101,14 @@ if selected == "Medha (Chat)":
                             final_answer = res
                             break
                 
-                # 🛡️ PRIVATE GOOGLE BACKUP
+                # 🛡️ PRIVATE GOOGLE BACKUP (Always works even if others are saturated)
                 if not final_answer and client:
                     try:
                         resp = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
                         final_answer = resp.text
                     except: pass
 
-            if not final_answer: final_answer = "🔱 Neural systems saturated. Please re-command."
+            if not final_answer: final_answer = "🔱 Neural systems saturated. This is a safety cooldown. Please wait 3 seconds and re-command."
             
             st.markdown(final_answer)
             st.session_state.chat_history.append({"role": "assistant", "content": final_answer})
