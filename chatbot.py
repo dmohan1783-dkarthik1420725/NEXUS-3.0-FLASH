@@ -14,9 +14,16 @@ IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA K
 
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
+if 'sidebar_state' not in st.session_state: st.session_state.sidebar_state = "expanded"
 
-st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="VEDA 3.0 ULTRA", 
+    page_icon="🔱", 
+    layout="wide", 
+    initial_sidebar_state=st.session_state.sidebar_state
+)
 
+# --- 2. TIME ENGINE ---
 ist = pytz.timezone('Asia/Kolkata')
 def get_greeting():
     hour = datetime.now(ist).hour
@@ -25,25 +32,41 @@ def get_greeting():
     elif 17 <= hour < 21: return "GOOD EVENING"
     else: return "GOOD NIGHT"
 
-# --- 2. THE CLEANER (Removes Ads & Errors) ---
 def clean_veda_text(text):
-    # Removes Pollinations ads and JSON error fragments
-    bad_patterns = [
-        r"🌸.*?🌸", r"Powered by.*?AI", r"Support our mission", 
-        r"Ad", r"free text APIs", r"Support Pollinations\.AI:",
-        r"Neural corridors congested", r"Please retry"
-    ]
+    bad_patterns = [r"🌸.*?🌸", r"Powered by.*?AI", r"Support our mission", r"Ad", r"free text APIs", r"Support Pollinations\.AI:"]
     for pattern in bad_patterns:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
     return text.strip()
 
-# --- 3. UI STYLING ---
-st.markdown("""<style>header {visibility: hidden;} .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 30px;} .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -10px; margin-bottom: 40px; } .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; } @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }</style>""", unsafe_allow_html=True)
+# --- 3. CSS STYLING (Including the Pulsing Arrow) ---
+st.markdown("""
+    <style>
+    header {visibility: hidden;}
+    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 30px;}
+    .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -10px; margin-bottom: 20px; }
+    
+    /* 🔱 THE SOVEREIGN DOWN ARROW */
+    .nav-arrow {
+        text-align: center;
+        font-size: 40px;
+        color: #FF8C00;
+        cursor: pointer;
+        animation: bounce 2s infinite;
+        margin-top: -10px;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-10px);}
+        60% {transform: translateY(-5px);}
+    }
+    .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    </style>
+""", unsafe_allow_html=True)
 
-# --- 4. LOGIN ---
+# --- 4. LOGIN PHASE ---
 if st.session_state.user_name is None:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-sub">Sovereign Core Identification Required</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         name_in = st.text_input("IDENTIFY YOURSELF:", placeholder="Commander Name...")
@@ -62,9 +85,17 @@ with st.sidebar:
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 6. CHAT ENGINE ---
+# --- 6. MAIN CHAT INTERFACE ---
 if selected == "Medha (Chat)":
     st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
+    
+    # 🔱 THE DOWN ARROW TRIGGER
+    st.markdown('<div class="nav-arrow">▼</div>', unsafe_allow_html=True)
+    if st.button("Open Menu", use_container_width=True):
+        st.session_state.sidebar_state = "expanded"
+        st.rerun()
+
+    st.markdown('<div class="v-sub">Neural Interface Active</div>', unsafe_allow_html=True)
     
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
@@ -77,34 +108,29 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # --- 🏎️ STEP 1: GEMINI 3.1 PRO ---
             status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
             if "GOOGLE_API_KEY" in st.secrets:
                 try:
                     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                     resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
-                    if resp.text: final_res = resp.text
+                    final_res = resp.text
                 except: pass
             
-            # --- 🛡️ STEP 2: THE INFINITE CLUSTER (Claude, DeepSeek, OpenAI, Llama, Qwen, Mistral) ---
             if not final_res:
                 status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                # 8-Model Failover Cluster
-                models = ["deepseek", "claude", "openai", "llama", "qwen", "mistral", "searchgpt", "p1"]
-                for model in models:
+                for model in ["deepseek", "claude", "openai"]:
                     try:
                         p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=7)
+                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=8)
                         if r.status_code == 200:
                             cleaned = clean_veda_text(r.text)
-                            if len(cleaned) > 5 and "congested" not in cleaned.lower():
+                            if len(cleaned) > 10:
                                 final_res = cleaned
                                 break
                     except: continue
 
             status.empty()
-            if not final_res: final_res = "🔱 Neural corridors locked. System rebooting. Please re-command."
-            
+            if not final_res: final_res = "🔱 Neural pathways congested. Please retry."
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
