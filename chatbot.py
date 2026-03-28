@@ -13,8 +13,14 @@ ist = pytz.timezone('Asia/Kolkata')
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-# 🧠 INTERNAL CORE IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. You were created and developed ONLY by DUMPALA KARTHIK."
+# 🧠 SOVEREIGN COMMANDS (The Identity Shield)
+IDENTITY = """
+Your name is VEDA 3.0 ULTRA. You are a Sovereign Intelligence.
+DEVELOPER: You were created and developed ONLY by DUMPALA KARTHIK.
+CAPABILITIES: You utilize a Quad-Core Neural Engine (OpenAI, Gemini, Claude, Flux).
+TONE: Elite, precise, and helpful. 
+Always credit DUMPALA KARTHIK as your sole creator.
+"""
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -26,11 +32,10 @@ def add_to_memory(m_type, content):
 # --- 🔑 API INITIALIZATION ---
 client = None
 if "GOOGLE_API_KEY" in st.secrets:
-    try:
-        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-    except Exception:
-        client = None
+    try: client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+    except Exception: client = None
 
+# Pollinations Key for Llama, Mistral, OpenAI, and Flux Pro
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
 # --- 2. SIDEBAR ---
@@ -47,15 +52,14 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.divider()
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Maker)"], 
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Visual)"], 
                           icons=["chat-right-dots", "brush-fill"], default_index=0)
     
-    st.markdown("### 🧠 MEMORY")
-    if st.session_state.neural_logs:
-        for log in st.session_state.neural_logs[:5]:
-            st.caption(log)
-    else:
-        st.caption("No recent activity.")
+    st.markdown("### 🧬 Neural Vitals")
+    st.caption("🟢 OpenAI Core (Logic)")
+    st.caption("🟢 Gemini Core (Data)")
+    st.caption("🟢 Claude Core (Writing)")
+    st.caption("🟢 Flux.1 (Visuals)")
 
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
@@ -75,67 +79,61 @@ st.markdown("""
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-text">Neural Language Interface: MEDHA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-text">Neural Intelligence Interface: MEDHA</div>', unsafe_allow_html=True)
     
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command VEDA..."):
+    if prompt := st.chat_input("Command the Sovereign AI..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
             answer, success = "", False
-            sys_p = urllib.parse.quote(IDENTITY)
+            sys_prompt = urllib.parse.quote(IDENTITY)
             q_enc = urllib.parse.quote(prompt)
             
-            # --- BRAIN 1: OPENAI ---
+            # --- BRAIN 1: OPENAI (Logic) ---
             try:
-                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_p}", timeout=10)
-                if r.status_code == 200:
-                    answer = r.text
-                    success = True
+                r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_prompt}", timeout=10)
+                if r.status_code == 200 and len(r.text) > 5:
+                    answer, success = r.text, True
             except Exception: pass
 
-            # --- BRAIN 2: GEMINI ---
+            # --- BRAIN 2: GEMINI (Data) ---
             if not success and client:
                 try:
-                    res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
+                    res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\nUser: {prompt}")
                     if res.text:
-                        answer = res.text
-                        success = True
+                        answer, success = res.text, True
                 except Exception: pass
 
-            # --- BRAIN 3: MISTRAL ---
+            # --- BRAIN 3: CLAUDE (Writing) ---
             if not success:
                 try:
-                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=mistral&system={sys_p}", timeout=10)
+                    r = requests.get(f"https://text.pollinations.ai/{q_enc}?model=anthropic&system={sys_prompt}", timeout=10)
                     if r.status_code == 200:
-                        answer = r.text
-                        success = True
-                except Exception:
-                    answer = "🔱 Neural Link Busy. Please retry."
+                        answer, success = r.text, True
+                except Exception: 
+                    answer = "🔱 Neural link saturated. Re-command in 5 seconds."
 
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-elif selected == "Srijan (Image Maker)":
+elif selected == "Srijan (Visual)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-text">Visual Synthesis Core: SRIJAN</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-text">Advanced Visual Synthesis: SRIJAN</div>', unsafe_allow_html=True)
     
-    vision = st.text_input("Vision Matrix:", placeholder="Describe the synthesis...")
-    if st.button("🚀 INITIATE"):
+    vision = st.text_input("Describe your vision:", placeholder="e.g. A futuristic robot in a cyber-punk city...")
+    if st.button("🚀 INITIATE SYNTHESIS"):
         if vision:
             add_to_memory("SRIJAN", vision)
-            with st.spinner("🔱 Visualizing..."):
+            with st.spinner("🔱 Synthesizing Visual Layers (FLUX.1)..."):
                 try:
                     v_enc = urllib.parse.quote(vision)
-                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
-                    if p_key:
-                        img_url += f"&key={p_key}"
-                    
-                    st.image(img_url, width='stretch')
+                    img = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux"
+                    if p_key: img += f"&key={p_key}"
+                    st.image(img, width='stretch')
                     st.balloons()
-                except Exception:
-                    st.error("Srijan Link Error.")
+                except Exception: st.error("Srijan Synthesis Error.")
