@@ -8,7 +8,7 @@ import pytz
 from streamlit_option_menu import option_menu
 import time
 
-# --- 1. CORE CONFIGURATION ---
+# --- 1. CORE CONFIGURATION (SIDEBAR FIRST) ---
 if 'sidebar_state' not in st.session_state:
     st.session_state.sidebar_state = "expanded"
 
@@ -16,14 +16,15 @@ st.set_page_config(
     page_title="VEDA 3.0 ULTRA", 
     page_icon="🔱", 
     layout="wide", 
-    initial_sidebar_state=st.session_state.sidebar_state
+    # This ensures it is OPEN when the page first loads
+    initial_sidebar_state="expanded" 
 )
 
 ist = pytz.timezone('Asia/Kolkata')
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 
-# 🧠 THE SOVEREIGN IDENTITY
+# 🧠 SOVEREIGN IDENTITY
 IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
@@ -34,29 +35,26 @@ if "GOOGLE_API_KEY" in st.secrets:
     try:
         client = genai.Client(
             api_key=st.secrets["GOOGLE_API_KEY"], 
-            http_options=types.HttpOptions(timeout=20000) # Fast timeout to trigger backup
+            http_options=types.HttpOptions(timeout=15000)
         )
     except: client = None
 
-# 🛡️ THE UNSTOPPABLE BACKUP (Pollinations OpenAI)
 def fetch_backup_ai(q_enc, sys_p):
     try:
         url = f"https://text.pollinations.ai/{q_enc}?model=openai&system={sys_p}"
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, timeout=12)
         if r.status_code == 200: return r.text
     except: return None
 
 # --- 2. THE SOVEREIGN SIDEBAR ---
 with st.sidebar:
-    # Top Branding
-    st.markdown("<h1 style='text-align:center; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align:center; color:#FF8C00; margin-top:-10px;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
     
-    # Mode Selector (Modernized)
     selected = option_menu(
         None, ["Medha (Chat)", "Srijan (Image Gen)"], 
         icons=["chat-right-dots", "brush-fill"], 
-        menu_icon="cast", default_index=0,
+        default_index=0,
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#FF8C0033"},
@@ -64,7 +62,6 @@ with st.sidebar:
         }
     )
 
-    # Date/Time Box
     st.markdown(f"""
         <div style="background-color:rgba(255,140,0,0.1); padding:15px; border-radius:12px; text-align:center; border:1px solid #FF8C00; margin-top:20px;">
             <p style="margin:0; font-size:12px; color:#FF8C00;">{get_now_full()}</p>
@@ -73,7 +70,9 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.divider()
-    if st.button("« Collapse Sidebar"):
+    
+    # Check if the sidebar is expanded to show the collapse button
+    if st.button("« Collapse Menu"):
         st.session_state.sidebar_state = "collapsed"
         st.rerun()
     
@@ -86,37 +85,41 @@ st.markdown("""
     <style>
     header {visibility: hidden;}
     
-    /* 🔱 THE FLOATING SOVEREIGN ARROW */
+    /* 🔱 THE FLOATING SOVEREIGN ARROW (Left Upper Side) */
     .sovereign-arrow {
         position: fixed;
         top: 15%; 
-        left: 20px;
+        left: 15px;
         z-index: 10000;
         background: #FF8C00;
         color: white;
-        padding: 15px 20px;
-        border-radius: 12px;
-        font-size: 24px;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 22px;
         font-weight: bold;
-        box-shadow: 0 0 25px rgba(255, 140, 0, 0.8);
+        box-shadow: 0 0 20px rgba(255, 140, 0, 0.7);
         cursor: pointer;
         animation: swing 3s infinite ease-in-out;
     }
     @keyframes swing {
         0%, 100% { transform: translateX(0px); }
-        50% { transform: translateX(15px); }
+        50% { transform: translateX(12px); }
     }
 
-    .v-title { font-size: 55px; color: #FF8C00; text-align: center; font-weight: 900; margin-top: 10px; }
-    .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -15px; margin-bottom: 40px; }
+    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; margin-top: 20px; }
+    .v-sub { text-align: center; color: #666; font-size: 16px; margin-top: -10px; margin-bottom: 30px; }
     .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; text-shadow: 0 0 10px rgba(255,140,0,0.5); font-size: 18px; }
     @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
     </style>
 """, unsafe_allow_html=True)
 
-# Show arrow cue when sidebar is closed
+# If the sidebar is collapsed, show the arrow as a "Open" prompt
+# Note: Streamlit's native button at the top-left will still work.
 if st.session_state.sidebar_state == "collapsed":
     st.markdown('<div class="sovereign-arrow">➤</div>', unsafe_allow_html=True)
+    if st.button("Open Sidebar", key="open_btn"):
+        st.session_state.sidebar_state = "expanded"
+        st.rerun()
 
 if selected == "Medha (Chat)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
@@ -125,7 +128,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Command the Sovereign AI..."):
+    if prompt := st.chat_input("Command VEDA 3.0 ULTRA..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
@@ -134,21 +137,16 @@ if selected == "Medha (Chat)":
             final_answer = ""
             p_low = prompt.lower().strip()
             
-            # --- 🚀 LOCAL IDENTITY ---
             if any(x in p_low for x in ["who made you", "creator"]):
                 final_answer = "I was created and developed exclusively by **DUMPALA KARTHIK**. I am VEDA 3.0 ULTRA."
 
-            # --- 🏎️ SOVEREIGN PROCESSING ---
             if not final_answer:
                 status_area.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
-                
-                # Attempt Primary
                 if client:
                     try:
                         resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
                         final_answer = resp.text
                     except:
-                        # 🛡️ SILENT SWITCH TO BACKUP
                         status_area.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
                         sys_p = urllib.parse.quote(IDENTITY); q_enc = urllib.parse.quote(prompt)
                         final_answer = fetch_backup_ai(q_enc, sys_p)
@@ -164,7 +162,6 @@ if selected == "Medha (Chat)":
 
 elif selected == "Srijan (Image Gen)":
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-sub">Advanced Visual Synthesis</div>', unsafe_allow_html=True)
     vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe...")
     if st.button("🚀 INITIATE"):
         if vision:
