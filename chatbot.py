@@ -12,9 +12,13 @@ import re
 # --- 1. SOVEREIGN CONFIG & IDENTITY ---
 IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
 
-if 'user_name' not in st.session_state: st.session_state.user_name = None
-if 'chat_history' not in st.session_state: st.session_state.chat_history = []
-if 'sidebar_state' not in st.session_state: st.session_state.sidebar_state = "expanded"
+# Check session state before setting page config
+if 'sidebar_state' not in st.session_state:
+    st.session_state.sidebar_state = "expanded"
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = None
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
 st.set_page_config(
     page_title="VEDA 3.0 ULTRA", 
@@ -23,7 +27,6 @@ st.set_page_config(
     initial_sidebar_state=st.session_state.sidebar_state
 )
 
-# --- 2. TIME ENGINE ---
 ist = pytz.timezone('Asia/Kolkata')
 def get_greeting():
     hour = datetime.now(ist).hour
@@ -38,65 +41,65 @@ def clean_veda_text(text):
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
     return text.strip()
 
-# --- 3. CSS STYLING (Including the Pulsing Arrow) ---
+# --- 2. CSS STYLING ---
 st.markdown("""
     <style>
     header {visibility: hidden;}
-    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 30px;}
-    .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -10px; margin-bottom: 20px; }
-    
-    /* 🔱 THE SOVEREIGN DOWN ARROW */
+    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 20px;}
     .nav-arrow {
         text-align: center;
-        font-size: 40px;
+        font-size: 45px;
         color: #FF8C00;
         cursor: pointer;
-        animation: bounce 2s infinite;
+        animation: bounce 1.5s infinite;
         margin-top: -10px;
+        margin-bottom: 5px;
     }
     @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-        40% {transform: translateY(-10px);}
-        60% {transform: translateY(-5px);}
+        0%, 100% {transform: translateY(0);}
+        50% {transform: translateY(-10px);}
     }
     .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; }
     @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. LOGIN PHASE ---
+# --- 3. LOGIN PHASE ---
 if st.session_state.user_name is None:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        name_in = st.text_input("IDENTIFY YOURSELF:", placeholder="Commander Name...")
+        name_in = st.text_input("IDENTIFY COMMANDER:", placeholder="Name...")
         if st.button("INITIALIZE SYSTEM 🚀", use_container_width=True):
             if name_in:
                 st.session_state.user_name = name_in.strip()
+                st.session_state.sidebar_state = "expanded"
                 st.rerun()
     st.stop()
 
-# --- 5. SIDEBAR ---
+# --- 4. SIDEBAR (The Sovereign Menu) ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
-    selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], icons=["chat-right-dots", "brush-fill"], default_index=0, styles={"nav-link-selected": {"background-color": "#FF8C00"}})
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], 
+                          icons=["chat-right-dots", "brush-fill"], default_index=0, 
+                          styles={"nav-link-selected": {"background-color": "#FF8C00"}})
     st.divider()
     if st.button("🗑️ Reset Core"):
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 6. MAIN CHAT INTERFACE ---
+# --- 5. MAIN INTERFACE ---
 if selected == "Medha (Chat)":
     st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
     
-    # 🔱 THE DOWN ARROW TRIGGER
+    # 🔱 THE DOWN ARROW (Visual Trigger)
     st.markdown('<div class="nav-arrow">▼</div>', unsafe_allow_html=True)
-    if st.button("Open Menu", use_container_width=True):
+    
+    # Force Sidebar Expansion Button
+    if st.button("🔱 OPEN SYSTEM MENU", use_container_width=True):
         st.session_state.sidebar_state = "expanded"
         st.rerun()
 
-    st.markdown('<div class="v-sub">Neural Interface Active</div>', unsafe_allow_html=True)
-    
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
@@ -107,8 +110,9 @@ if selected == "Medha (Chat)":
         with st.chat_message("assistant"):
             status = st.empty()
             final_res = ""
-            
             status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
+            
+            # --- API FALLBACK ENGINE ---
             if "GOOGLE_API_KEY" in st.secrets:
                 try:
                     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -117,26 +121,20 @@ if selected == "Medha (Chat)":
                 except: pass
             
             if not final_res:
-                status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                for model in ["deepseek", "claude", "openai"]:
-                    try:
-                        p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=8)
-                        if r.status_code == 200:
-                            cleaned = clean_veda_text(r.text)
-                            if len(cleaned) > 10:
-                                final_res = cleaned
-                                break
-                    except: continue
+                status.markdown('<p class="thinking-text">🔱 rotating through pollination core....</p>', unsafe_allow_html=True)
+                try:
+                    p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
+                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?model=openai&system={i_enc}", timeout=8)
+                    final_res = clean_veda_text(r.text)
+                except: final_res = "🔱 Neural corridors congested. Please retry."
 
             status.empty()
-            if not final_res: final_res = "🔱 Neural pathways congested. Please retry."
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
 elif selected == "Srijan (Image Gen)":
     st.markdown('<div class="v-title">SRIJAN MODE</div>', unsafe_allow_html=True)
-    vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
+    vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe...")
     if st.button("🚀 INITIATE"):
         if vision:
             with st.spinner("🔱 Visualizing..."):
