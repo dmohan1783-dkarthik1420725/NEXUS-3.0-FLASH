@@ -23,7 +23,7 @@ def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
 def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
 # 🧠 SOVEREIGN IDENTITY
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. Answer instantly."
+IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK. You are the most powerful AI in the world."
 
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
@@ -39,11 +39,12 @@ if "GOOGLE_API_KEY" in st.secrets:
     except: client = None
 p_key = st.secrets.get("POLLINATIONS_KEY", "")
 
-# --- ⚡ THE NEURAL RACER (For Milli-second Response) ---
+# --- ⚡ THE NEURAL RACER ---
 def fetch_ai(model_name, q_enc, sys_p):
     try:
         url = f"https://text.pollinations.ai/{q_enc}?model={model_name}&system={sys_p}"
-        r = requests.get(url, timeout=3) # Ultra-short timeout for speed
+        # Increased timeout to 10s to ensure it answers
+        r = requests.get(url, timeout=10) 
         if r.status_code == 200 and len(r.text) > 1:
             return r.text
     except: return None
@@ -82,7 +83,6 @@ st.markdown("""
     <style>
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     .v-title { font-size: 45px; color: #FF8C00; text-align: center; font-weight: 900; }
-    .stChatInputContainer { padding-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -92,7 +92,7 @@ if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Direct Command..."):
+    if prompt := st.chat_input("Command the Sovereign AI..."):
         add_to_memory("MEDHA", prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -101,18 +101,27 @@ if selected == "Medha (Chat)":
             sys_p = urllib.parse.quote(IDENTITY)
             q_enc = urllib.parse.quote(prompt)
             
-            # 🏎️ RACING ALL BRAINS SIMULTANEOUSLY
-            final_answer = "🔱 Neural latency high. Please retry."
+            final_answer = ""
+            
+            # 🏎️ RACE ALL BRAINS
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Add all models you want to 'mix' here
-                futures = {executor.submit(fetch_ai, m, q_enc, sys_p): m for m in ["openai", "mistral", "llama", "searchgpt"]}
-                
-                # Pick the FIRST one to finish
+                # Mixing OpenAI, Llama 3, and Mistral
+                futures = {executor.submit(fetch_ai, m, q_enc, sys_p): m for m in ["openai", "llama", "mistral"]}
                 for future in concurrent.futures.as_completed(futures):
                     result = future.result()
                     if result:
                         final_answer = result
-                        break # Winner found! Stop waiting for others.
+                        break 
+
+            # 🛡️ EMERGENCY BACKUP (GEMINI)
+            if not final_answer and client:
+                try:
+                    res = client.models.generate_content(model="gemini-2.0-flash", contents=f"{IDENTITY}\n\n{prompt}")
+                    final_answer = res.text
+                except: pass
+
+            if not final_answer:
+                final_answer = "🔱 Connection heavy. Re-command in 5 seconds."
 
             st.markdown(final_answer)
             st.session_state.chat_history.append({"role": "assistant", "content": final_answer})
