@@ -25,10 +25,22 @@ def get_greeting():
     elif 17 <= hour < 21: return "GOOD EVENING"
     else: return "GOOD NIGHT"
 
-# --- 2. CSS STYLING ---
+# --- 2. THE CLEANER (Removes Ads & Errors) ---
+def clean_veda_text(text):
+    # Removes Pollinations ads and JSON error fragments
+    bad_patterns = [
+        r"🌸.*?🌸", r"Powered by.*?AI", r"Support our mission", 
+        r"Ad", r"free text APIs", r"Support Pollinations\.AI:",
+        r"Neural corridors congested", r"Please retry"
+    ]
+    for pattern in bad_patterns:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+    return text.strip()
+
+# --- 3. UI STYLING ---
 st.markdown("""<style>header {visibility: hidden;} .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 30px;} .v-sub { text-align: center; color: #666; font-size: 18px; margin-top: -10px; margin-bottom: 40px; } .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; } @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }</style>""", unsafe_allow_html=True)
 
-# --- 3. LOGIN PHASE ---
+# --- 4. LOGIN ---
 if st.session_state.user_name is None:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     st.markdown('<div class="v-sub">Sovereign Core Identification Required</div>', unsafe_allow_html=True)
@@ -41,7 +53,7 @@ if st.session_state.user_name is None:
                 st.rerun()
     st.stop()
 
-# --- 4. SIDEBAR ---
+# --- 5. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Image Gen)"], icons=["chat-right-dots", "brush-fill"], default_index=0, styles={"nav-link-selected": {"background-color": "#FF8C00"}})
@@ -50,7 +62,7 @@ with st.sidebar:
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 5. MAIN INTERFACE ---
+# --- 6. CHAT ENGINE ---
 if selected == "Medha (Chat)":
     st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
     
@@ -65,32 +77,33 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # PHASE 1: GEMINI 3.1 PRO
+            # --- 🏎️ STEP 1: GEMINI 3.1 PRO ---
             status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
             if "GOOGLE_API_KEY" in st.secrets:
                 try:
                     client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                     resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
-                    final_res = resp.text
+                    if resp.text: final_res = resp.text
                 except: pass
             
-            # PHASE 2: CLEAN ROTATION CLUSTER
+            # --- 🛡️ STEP 2: THE INFINITE CLUSTER (Claude, DeepSeek, OpenAI, Llama, Qwen, Mistral) ---
             if not final_res:
                 status.markdown('<p class="thinking-text">🔱 researching....</p>', unsafe_allow_html=True)
-                for model in ["deepseek", "openai", "claude"]:
+                # 8-Model Failover Cluster
+                models = ["deepseek", "claude", "openai", "llama", "qwen", "mistral", "searchgpt", "p1"]
+                for model in models:
                     try:
                         p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=8)
-                        if r.status_code == 200 and "Queue full" not in r.text:
-                            # 🛡️ SOVEREIGN AD-WIPE (Enhanced)
-                            clean_text = re.sub(r'🌸.*?🌸|Powered by.*?AI|Support our mission.*?everyone|Ad|free text APIs', '', r.text, flags=re.IGNORECASE)
-                            if len(clean_text.strip()) > 10:
-                                final_res = clean_text.strip()
+                        r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=7)
+                        if r.status_code == 200:
+                            cleaned = clean_veda_text(r.text)
+                            if len(cleaned) > 5 and "congested" not in cleaned.lower():
+                                final_res = cleaned
                                 break
                     except: continue
 
             status.empty()
-            if not final_res: final_res = "🔱 Neural corridors congested. Please retry."
+            if not final_res: final_res = "🔱 Neural corridors locked. System rebooting. Please re-command."
             
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
