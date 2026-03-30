@@ -7,9 +7,9 @@ import pytz
 from streamlit_option_menu import option_menu
 import re
 
-# --- 1. SOVEREIGN IDENTITY ---
+# --- 1. SOVEREIGN CONFIG & IDENTITY ---
 CREATOR = "DUMPALA KARTHIK"
-IDENTITY = f"You are VEDA 3.0 ULTRA. Created by {CREATOR}. He built your neural-rotation logic through immense effort and late-night coding. You are his Sovereign AI. Be fast, elite, and acknowledge his mastery."
+IDENTITY = f"You are VEDA 3.0 ULTRA. Created by {CREATOR}. He built your rotation logic through immense effort. You are his Sovereign AI. Be fast, elite, and always acknowledge him."
 
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
@@ -29,7 +29,7 @@ def clean_veda(text):
     return re.sub(r"🌸.*?🌸|Powered by.*?AI|Support our mission|Ad|free text APIs", "", text, flags=re.IGNORECASE).strip()
 
 # --- 2. ELITE CSS ---
-st.markdown("""<style>header {visibility: hidden;} .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase;} .thinking { color: #FF8C00; font-style: italic; animation: pulse 0.8s infinite; } @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } } .sidebar-clock { background: rgba(255, 140, 0, 0.1); border-left: 4px solid #FF8C00; padding: 10px; border-radius: 5px; margin-bottom: 20px; }</style>""", unsafe_allow_html=True)
+st.markdown("""<style>header {visibility: hidden;} .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase;} .thinking { color: #FF8C00; font-style: italic; animation: pulse 1s infinite; } @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } } .sidebar-clock { background: rgba(255, 140, 0, 0.1); border-left: 4px solid #FF8C00; padding: 10px; border-radius: 5px; margin-bottom: 20px; }</style>""", unsafe_allow_html=True)
 
 # --- 3. LOGIN ---
 if st.session_state.user_name is None:
@@ -41,17 +41,15 @@ if st.session_state.user_name is None:
             if name_in: st.session_state.user_name = name_in.strip(); st.rerun()
     st.stop()
 
-# --- 4. SIDEBAR (With New Time/Date Bar) ---
+# --- 4. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0</h2>", unsafe_allow_html=True)
     
-    # 🕒 SOVEREIGN CLOCK & DATE BAR
-    current_time = datetime.now(ist).strftime("%I:%M:%S %p")
-    current_date = datetime.now(ist).strftime("%A, %d %B %Y")
+    # 🕒 CLOCK BAR
     st.markdown(f"""
         <div class="sidebar-clock">
-            <p style="margin:0; font-size: 12px; color: #FF8C00; font-weight: bold;">📅 {current_date}</p>
-            <p style="margin:0; font-size: 20px; color: white; font-weight: 900;">{current_time}</p>
+            <p style="margin:0; font-size: 12px; color: #FF8C00; font-weight: bold;">📅 {datetime.now(ist).strftime("%A, %d %B %Y")}</p>
+            <p style="margin:0; font-size: 20px; color: white; font-weight: 900;">{datetime.now(ist).strftime("%I:%M %p")}</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -74,18 +72,18 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # 🏎️ ENHANCED RAPID-ROTATION (DeepSeek -> OpenAI -> Llama -> Gemini)
-            fast_models = ["deepseek", "openai", "claude", "llama", "gemini"]
+            # 🏎️ IMPROVED FAILOVER (Switched order for speed)
+            models = ["openai", "mistral", "claude", "llama"]
             
-            for model in fast_models:
-                status.markdown(f'<p class="thinking">🔱 rotating to {model} core...</p>', unsafe_allow_html=True)
+            for model in models:
+                status.markdown(f'<p class="thinking">🔱 accessing {model} core...</p>', unsafe_allow_html=True)
                 try:
                     p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                    # Increased to 4s to prevent false 'Saturation' errors on slow networks
-                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=4)
+                    # Increased timeout to 8s for reliability
+                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?model={model}&system={i_enc}", timeout=8)
                     if r.status_code == 200:
                         cleaned = clean_veda(r.text)
-                        if len(cleaned) > 5 and "congested" not in cleaned.lower():
+                        if len(cleaned) > 2 and "congested" not in cleaned.lower():
                             final_res = cleaned
                             break
                 except: continue
@@ -96,9 +94,15 @@ if selected == "Medha (Chat)":
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
 elif selected == "Srijan (Images)":
-    with st.form("img_form"):
-        vision = st.text_input("Vision Matrix Prompt:")
-        if st.form_submit_button("🚀 INITIATE"):
-            with st.spinner("🔱 Visualizing..."):
-                img = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(vision)}?width=1024&height=1024&nologo=true"
-                st.image(img, use_container_width=True)
+    # 🔱 SRIJAN FIX: Proper form handling and explicit model selection
+    with st.container():
+        vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the image...")
+        if st.button("🚀 INITIATE VISUALIZATION", use_container_width=True):
+            if vision:
+                with st.spinner("🔱 Synthesizing Visual Matrix..."):
+                    v_enc = urllib.parse.quote(vision)
+                    # 🚀 Forced Flux Model for 2026 Stability
+                    img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={datetime.now().microsecond}"
+                    st.image(img_url, use_container_width=True, caption=f"🔱 Generated Vision for {st.session_state.user_name}")
+            else:
+                st.warning("Commander, please provide a vision prompt.")
