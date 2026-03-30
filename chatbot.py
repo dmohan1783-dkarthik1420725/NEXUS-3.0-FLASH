@@ -1,107 +1,129 @@
 import streamlit as st
 from google import genai
-from google.genai import types
 import requests
 import urllib.parse
 from datetime import datetime
 import pytz
 from streamlit_option_menu import option_menu
-import time
-import re
 
-# --- 1. SOVEREIGN CONFIG & IDENTITY ---
-IDENTITY = "Your name is VEDA 3.0 ULTRA. Created and developed ONLY by DUMPALA KARTHIK."
+# --- 1. CONFIGURATION & IDENTITY ---
+st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
+CREATOR = "Dumpala Karthik"
 
-if 'user_name' not in st.session_state: st.session_state.user_name = None
-if 'chat_history' not in st.session_state: st.session_state.chat_history = []
-
-st.set_page_config(
-    page_title="VEDA 3.0 ULTRA", 
-    page_icon="🔱", 
-    layout="wide", 
-    initial_sidebar_state="expanded"
-)
-
+# 🌍 GLOBAL TIME SYNC (IST)
 ist = pytz.timezone('Asia/Kolkata')
-def get_greeting():
-    hour = datetime.now(ist).hour
-    if 5 <= hour < 12: return "GOOD MORNING"
-    elif 12 <= hour < 17: return "GOOD AFTERNOON"
-    elif 17 <= hour < 21: return "GOOD EVENING"
-    else: return "GOOD NIGHT"
+def get_now_full(): return datetime.now(ist).strftime("%A, %d %B %Y")
+def get_now_time(): return datetime.now(ist).strftime("%I:%M %p")
 
-def clean_veda_text(text):
-    # Aggressive ad-shield logic to keep output clean
-    bad_patterns = [r"🌸.*?🌸", r"Powered by.*?AI", r"Support our mission", r"Ad", r"free text APIs", r"Support Pollinations\.AI:"]
-    for pattern in bad_patterns:
-        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
-    return text.strip()
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created and developed ONLY by {CREATOR}."
 
-# --- 2. CSS STYLING ---
-st.markdown("""
-    <style>
-    header {visibility: hidden;}
-    .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 10px;}
-    .v-sub { text-align: center; color: #666; font-size: 16px; margin-top: -10px; margin-bottom: 20px; }
-    .thinking-text { color: #FF8C00; font-style: italic; font-weight: bold; animation: pulse 1.5s infinite; font-size: 18px; }
-    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-    .nav-container { max-width: 400px; margin: 0 auto 30px auto; }
-    </style>
-""", unsafe_allow_html=True)
+# --- 🧠 NEURAL MEMORY ---
+if "neural_logs" not in st.session_state: st.session_state.neural_logs = []
+if "chat_history" not in st.session_state: st.session_state.chat_history = []
 
-# --- 3. LOGIN PHASE ---
-if st.session_state.user_name is None:
-    st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        name_in = st.text_input("IDENTIFY COMMANDER:", placeholder="Name...")
-        if st.button("INITIALIZE SYSTEM 🚀", use_container_width=True):
-            if name_in:
-                st.session_state.user_name = name_in.strip()
-                st.rerun()
-    st.stop()
+def add_to_memory(m_type, content):
+    ts = datetime.now(ist).strftime("%H:%M:%S")
+    log_entry = f"[{ts}] {m_type}: {content[:15]}..."
+    st.session_state.neural_logs.insert(0, log_entry)
 
-# --- 4. MAIN INTERFACE ---
-st.markdown(f'<div class="v-title">{get_greeting()}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
+# --- 🔑 KEY RETRIEVAL ---
+p_key = st.query_params.get("api_key", st.secrets.get("POLLINATIONS_KEY", ""))
 
-# 🔱 PURE CHAT INTERFACE
-for msg in st.session_state.chat_history:
-    with st.chat_message(msg["role"]): st.markdown(msg["content"])
+# --- 🧠 GEMINI INITIALIZATION ---
+client = None
+gemini_online = False
+if "GOOGLE_API_KEY" in st.secrets:
+    try:
+        client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+        gemini_online = True
+    except: gemini_online = False
 
-if prompt := st.chat_input("Command VEDA..."):
-    st.session_state.chat_history.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
-    
-    with st.chat_message("assistant"):
-        status = st.empty()
-        final_res = ""
-        status.markdown('<p class="thinking-text">🔱 thinking with veda....</p>', unsafe_allow_html=True)
-        
-        # --- PHASE 1: GEMINI 3.1 PRO ---
-        if "GOOGLE_API_KEY" in st.secrets:
-            try:
-                client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\n{prompt}")
-                final_res = resp.text
-            except: pass
-        
-        # --- PHASE 2: SILENT ROTATION TO POLLINATIONS ---
-        if not final_res:
-            status.markdown('<p class="thinking-text">🔱 rotating to pollination core....</p>', unsafe_allow_html=True)
-            try:
-                p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                r = requests.get(f"https://text.pollinations.ai/{p_enc}?model=openai&system={i_enc}", timeout=10)
-                final_res = clean_veda_text(r.text)
-            except: final_res = "🔱 Neural corridors congested. Please retry."
-
-        status.empty()
-        st.markdown(final_res)
-        st.session_state.chat_history.append({"role": "assistant", "content": final_res})
-
-# Sidebar reset (as a backup)
+# --- 2. SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
-    if st.button("🗑️ Reset All Data"):
+    st.markdown("<h1 style='text-align: center; font-size: 80px; margin-bottom:0;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; color: #FF8C00; margin-top:0;'>VEDA 3.0 ULTRA</h3>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.markdown(f"""
+        <div style="background-color: rgba(255, 140, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #FF8C00; text-align: center;">
+            <p style="margin:0; font-size: 13px; color: #FF8C00; font-weight: bold;">📅 {get_now_full()}</p>
+            <p style="margin:5px 0 0 0; font-size: 26px; color: white; font-weight: 800;">{get_now_time()}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.divider()
+    selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
+                          icons=["cpu", "layers"], default_index=0)
+    
+    st.markdown("### 🧠 NEURAL LOGS")
+    for log in st.session_state.neural_logs[:8]:
+        st.code(log, language="text")
+
+    if st.button("🗑️ Wipe Neural Core"):
         st.session_state.chat_history = []
-        st.session_state.user_name = None
+        st.session_state.neural_logs = []
         st.rerun()
+
+# --- 3. MAIN INTERFACE ---
+ORANGE_TITLE = "<style>.orange-title {font-size: 50px; color: #FF8C00; text-align: center; font-weight: 800;}</style>"
+
+if selected == "Medha (Chat)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+    
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
+    if prompt := st.chat_input("Command VEDA..."):
+        add_to_memory("MEDHA", prompt)
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            answer, success = "", False
+            
+            # --- BRAIN 1: GEMINI 2.0 FLASH (FASTEST & MOST STABLE) ---
+            if gemini_online:
+                try:
+                    res = client.models.generate_content(
+                        model="gemini-2.0-flash", 
+                        contents=f"{IDENTITY}\n\nUser: {prompt}"
+                    )
+                    answer = res.text
+                    success = True
+                except: st.caption("🔄 Neural Link Busy...")
+
+            # --- BRAIN 2: POLLINATIONS BACKUP ---
+            if not success:
+                try:
+                    q_enc = urllib.parse.quote(prompt)
+                    # Force a lightweight model for backup to avoid "Heavy" errors
+                    p_url = f"https://text.pollinations.ai/{q_enc}?model=openai&system=You+are+VEDA"
+                    r = requests.get(p_url, timeout=10)
+                    if r.status_code == 200:
+                        answer = r.text
+                        success = True
+                    else: answer = "🔱 **Link Busy.** Please wait 5 seconds."
+                except: answer = "Connection Interrupt."
+
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+elif selected == "Srijan (Images)":
+    st.markdown(ORANGE_TITLE, unsafe_allow_html=True)
+    st.markdown('<div class="orange-title">SRIJAN ARCHITECT</div>', unsafe_allow_html=True)
+    
+    # Keeping your working Srijan logic exactly as it was
+    vision = st.text_input("Vision:", placeholder="Describe your image...")
+    if st.button("🚀 RENDER"):
+        if vision:
+            add_to_memory("SRIJAN", vision)
+            with st.spinner("Visualizing..."):
+                try:
+                    v_enc = urllib.parse.quote(vision)
+                    # This is your working Flux link
+                    img = f"https://gen.pollinations.ai/image/{v_enc}?width=1024&height=1024&nologo=true&model=flux&key={p_key}"
+                    st.image(img, caption=f"Created by {CREATOR}", use_column_width=True)
+                    st.balloons()
+                    st.markdown(f"**[📥 Download Image]({img})**")
+                except: st.error("Architect Busy.")
