@@ -18,13 +18,12 @@ st.set_page_config(
 
 # --- 2. SOVEREIGN CONFIG & MISSION ---
 CREATOR = "DUMPALA KARTHIK"
-MISSION = """VEDA 3.0 ULTRA is a pinnacle of Sovereign Artificial Intelligence, engineered and brought to life through the relentless dedication and technical mastery of DUMPALA KARTHIK..."""
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Mission: {MISSION}"
+MISSION = """VEDA 3.0 ULTRA is a pinnacle of Sovereign Artificial Intelligence, engineered by DUMPALA KARTHIK to bypass system limits through a multi-brain failover cluster..."""
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. You have access to the world's most powerful AI models including Gemini, GPT-4/5, Claude, and Llama."
 
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
 
-# --- 3. TIME ENGINE ---
 ist = pytz.timezone('Asia/Kolkata')
 def get_time_data():
     now = datetime.now(ist)
@@ -39,7 +38,7 @@ def clean_veda(text):
     if any(x in text for x in ["{", "error", "429", "Queue full", "saturation", "congested"]): return ""
     return re.sub(r"🌸.*?🌸|Powered by.*?AI|Support our mission|Ad|free text APIs", "", text, flags=re.IGNORECASE).strip()
 
-# --- 4. ELITE CSS ---
+# --- 3. ELITE CSS ---
 st.markdown("""
     <style>
     header {visibility: hidden;}
@@ -50,7 +49,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. PERMANENT SIDEBAR ---
+# --- 4. PERMANENT SIDEBAR ---
 greet, d_str, t_str = get_time_data()
 with st.sidebar:
     st.markdown("<h1 style='text-align:center;'>🔱</h1><h2 style='text-align:center; color:#FF8C00;'>VEDA 3.0</h2>", unsafe_allow_html=True)
@@ -62,7 +61,7 @@ with st.sidebar:
         st.rerun()
     if st.session_state.user_name: st.success(f"Commander: {st.session_state.user_name}")
 
-# --- 6. LOGIN ---
+# --- 5. LOGIN ---
 if st.session_state.user_name is None:
     st.markdown('<div class="v-title">VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -72,7 +71,7 @@ if st.session_state.user_name is None:
             if name_in: st.session_state.user_name = name_in.strip(); st.rerun()
     st.stop()
 
-# --- 7. MAIN INTERFACE ---
+# --- 6. MAIN INTERFACE ---
 st.markdown(f'<div class="v-title">{greet}, {st.session_state.user_name.upper()}</div>', unsafe_allow_html=True)
 
 if selected == "Medha (Chat)":
@@ -87,45 +86,35 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # --- 🚀 TIER 1: GEMINI 3.1 PRO (PRIMARY) ---
-            status.markdown('<p class="thinking">🔱 Thinking with VEDA...</p>', unsafe_allow_html=True)
+            # --- 🚀 TIER 1: GEMINI 3.1 PRO (EXPERT) ---
+            status.markdown('<p class="thinking">🔱 Engaging Gemini 3.1 Pro core...</p>', unsafe_allow_html=True)
             try:
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                 resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\nUser: {prompt}")
                 if resp.text: final_res = resp.text
             except Exception: pass 
 
-            # --- 🛰️ TIER 2: POLLINATIONS (SECONDARY) ---
+            # --- 🛰️ TIER 2: ALL-POWERFUL STEALTH ROTATION (Claude/GPT/DeepSeek) ---
             if not final_res:
-                status.markdown('<p class="thinking">🧠 Performing Neural Analysis...</p>', unsafe_allow_html=True)
-                try:
-                    p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?model=openai&system={i_enc}&seed={random.randint(1,1000)}", timeout=12)
-                    cleaned = clean_veda(r.text)
-                    if cleaned: final_res = cleaned
-                except Exception: pass
-
-            # --- 🛡️ TIER 3: LLAMA (EMERGENCY ENGINE) ---
-            if not final_res:
-                status.markdown('<p class="thinking">🔱 Activating Llama Emergency Core...</p>', unsafe_allow_html=True)
-                try:
-                    p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?model=llama&system={i_enc}&seed={random.randint(1,1000)}", timeout=15)
-                    cleaned = clean_veda(r.text)
-                    if cleaned: final_res = cleaned
-                except Exception: pass
+                # This list ensures the most powerful AIs are tried in sequence
+                powerful_brains = ["openai", "mistral", "claude", "deepseek", "llama"]
+                for brain in powerful_brains:
+                    status.markdown(f'<p class="thinking">🧠 Handshaking with {brain} core...</p>', unsafe_allow_html=True)
+                    try:
+                        p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
+                        # High-priority stealth headers
+                        headers = {'User-Agent': f'VEDA-Apex-{random.randint(100, 999)}'}
+                        url = f"https://text.pollinations.ai/{p_enc}?model={brain}&system={i_enc}&seed={random.randint(1,1000)}"
+                        r = requests.get(url, headers=headers, timeout=12)
+                        cleaned = clean_veda(r.text)
+                        if cleaned:
+                            final_res = cleaned
+                            break
+                    except Exception: continue
 
             status.empty()
             if not final_res:
-                final_res = MISSION if any(x in prompt.lower() for x in ["who made you", "purpose"]) else "🔱 Sovereign Core is undergoing global synchronization. Please re-command."
+                final_res = "🔱 All high-level cores are synchronized. Please re-command in 5s."
             
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
-
-elif selected == "Srijan (Images)":
-    vision = st.text_input("Vision Matrix Prompt:")
-    if st.button("🚀 INITIATE"):
-        with st.spinner("🔱 Visualizing..."):
-            v_enc = urllib.parse.quote(vision)
-            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,9999)}"
-            st.image(img_url, use_container_width=True)
