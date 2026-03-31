@@ -1,7 +1,6 @@
 streamlit
 google-genai
 duckduckgo_search
-ddgs
 streamlit-option_menu
 pytz
 requests
