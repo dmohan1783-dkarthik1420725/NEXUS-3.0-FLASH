@@ -9,16 +9,16 @@ from streamlit_option_menu import option_menu
 import os
 import random
 
-# --- 1. PAGE CONFIGURATION ---
+# --- 1. SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 
 # --- 2. IDENTITY & MISSION ---
 CREATOR = "DUMPALA KARTHIK"
 MISSION = "VEDA 3.0 ULTRA: A pinnacle of Sovereign AI engineered by DUMPALA KARTHIK using satellite-linked global knowledge."
 
-# --- 3. CLOUD SATELLITE ENGINE ---
+# --- 3. CLOUD-NATIVE SATELLITE ENGINE ---
 def cloud_satellite_harvest(query="latest technology 2026"):
-    """Automatically harvests real-time data from the web mesh"""
+    """Automatically pulls real-time data from the web mesh"""
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=5))
@@ -33,28 +33,30 @@ def cloud_satellite_harvest(query="latest technology 2026"):
     except Exception as e:
         return f"📡 Satellite Uplink Failure: {e}"
 
-# --- 4. THE COMMANDER'S NAME LOGIC ---
+# --- 4. SESSION STATE INITIALIZATION ---
 if "commander_name" not in st.session_state:
     st.session_state.commander_name = None
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
 # --- 5. ELITE UI STYLING (NO BOXES) ---
 st.markdown("""
     <style>
     header {visibility: hidden;}
     body { background-color: #000000; color: #E0E0E0; }
-    .v-title { font-size: 40px; color: #FF8C00; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
-    .v-subtitle { font-size: 18px; color: #888; margin-bottom: 25px; }
+    .v-title { font-size: 42px; color: #FF8C00; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+    .v-subtitle { font-size: 18px; color: #888; margin-bottom: 30px; letter-spacing: 2px; }
     
-    /* ELITE TEXT STYLING (REMOVES CHAT BUBBLES) */
-    [data-testid="stChatMessage"] { background-color: transparent !important; border: none !important; padding: 0px !important; margin-bottom: 25px !important; }
-    [data-testid="stChatMessageContent"] { font-size: 18px; line-height: 1.6; border-left: 3px solid #FF8C00; padding-left: 20px !important; }
+    /* REMOVE CHAT BUBBLES - CLEAN TEXT ONLY */
+    [data-testid="stChatMessage"] { background-color: transparent !important; border: none !important; padding: 0px !important; margin-bottom: 30px !important; }
+    [data-testid="stChatMessageContent"] { font-size: 19px; line-height: 1.6; border-left: 3px solid #FF8C00; padding-left: 25px !important; }
     
-    .user-text { color: #00BFFF; font-weight: bold; font-size: 14px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
-    .veda-text { color: #FF8C00; font-weight: bold; font-size: 14px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+    .user-text { color: #00BFFF; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1.5px; }
+    .veda-text { color: #FF8C00; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1.5px; }
     
     [data-testid="stSidebar"] { background-color: #050505; border-right: 1px solid #333; }
-    .thinking { color: #FF8C00; font-style: italic; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .thinking { color: #FF8C00; font-style: italic; animation: pulse 1.5s infinite; font-size: 14px; }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
 """, unsafe_allow_html=True)
 
@@ -72,9 +74,9 @@ def get_dynamic_greeting():
 # --- 7. AUTHORIZATION WALL ---
 if st.session_state.commander_name is None:
     st.markdown('<div class="v-title">🔱 VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="v-subtitle">WAITING FOR COMMANDER IDENTIFICATION...</div>', unsafe_allow_html=True)
-    name_input = st.text_input("IDENTIFY YOURSELF:", placeholder="Enter your name...")
-    if st.button("AUTHORIZE UPLINK"):
+    st.markdown('<div class="v-subtitle">SECURE UPLINK: AWAITING AUTHORIZATION...</div>', unsafe_allow_html=True)
+    name_input = st.text_input("IDENTIFY YOURSELF, COMMANDER:", placeholder="Enter your designation...")
+    if st.button("AUTHORIZE ACCESS"):
         if name_input:
             st.session_state.commander_name = name_input.upper()
             st.rerun()
@@ -85,10 +87,10 @@ greet, time_str = get_dynamic_greeting()
 st.markdown(f'<div class="v-title">{greet}, {st.session_state.commander_name}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="v-subtitle">SATELLITE SYNC: ACTIVE | {time_str} IST</div>', unsafe_allow_html=True)
 
-# --- 9. SIDEBAR OPERATIONS ---
+# --- 9. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.markdown(f"<h2 style='color:#FF8C00; text-align:center;'>🔱 VEDA 3.0</h2>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:center; color:gray;'>LOGGED AS: {st.session_state.commander_name}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center; color:gray;'>STATION: VISAKHAPATNAM</p>", unsafe_allow_html=True)
     
     selected = option_menu(None, ["Medha (Chat)", "Srijan (Images)"], 
         icons=["cpu", "image"], default_index=0, 
@@ -101,38 +103,47 @@ with st.sidebar:
         st.rerun()
 
 # --- 10. CORE INTELLIGENCE (MEDHA) ---
-if 'chat_history' not in st.session_state: st.session_state.chat_history = []
-
 if selected == "Medha (Chat)":
+    # Render History
     for msg in st.session_state.chat_history:
-        label = f'<div class="user-text">👤 COMMANDER {st.session_state.commander_name}</div>' if msg["role"] == "user" else '<div class="veda-text">🔱 VEDA 3.0 ULTRA</div>'
+        label = f'<div class="user-text">👤 {st.session_state.commander_name}</div>' if msg["role"] == "user" else '<div class="veda-text">🔱 VEDA 3.0 ULTRA</div>'
         with st.chat_message(msg["role"]):
             st.markdown(label, unsafe_allow_html=True)
             st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Input Command to the Mesh..."):
+    # Input Processing
+    if prompt := st.chat_input("Command the Global Mesh..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
-            st.markdown(f'<div class="user-text">👤 COMMANDER {st.session_state.commander_name}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="user-text">👤 {st.session_state.commander_name}</div>', unsafe_allow_html=True)
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
             status = st.empty()
             final_res = ""
             
+            # Identity Bypass
             if any(x in prompt.lower() for x in ["who made you", "creator", "karthik", "purpose"]):
                 final_res = MISSION
             
             if not final_res:
-                status.markdown('<p class="thinking">📡 Accessing Global Satellite Mesh...</p>', unsafe_allow_html=True)
+                status.markdown('<p class="thinking">📡 Routing via LEO Satellite Mesh...</p>', unsafe_allow_html=True)
+                
+                # Auto-Harvest
                 world_knowledge = cloud_satellite_harvest(prompt)
                 identity_context = f"You are VEDA 3.0 ULTRA, created by {CREATOR}. Address the user as Commander {st.session_state.commander_name}."
                 
+                # PRIMARY UPLINK: GOOGLE GENAI
                 try:
                     client = Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                    resp = client.models.generate_content(model="gemini-2.0-flash", contents=f"{identity_context}\n\nSATELLITE DATA:\n{world_knowledge}\n\nUSER REQUEST: {prompt}")
+                    resp = client.models.generate_content(
+                        model="gemini-2.0-flash", 
+                        contents=f"{identity_context}\n\nSATELLITE DATA:\n{world_knowledge}\n\nUSER REQUEST: {prompt}"
+                    )
                     if resp.text: final_res = resp.text
-                except:
+                except Exception as e:
+                    # SECONDARY UPLINK: POLLINATIONS MESH
+                    status.markdown(f'<p class="thinking">⚠️ Primary Link Error. Re-routing Node...</p>', unsafe_allow_html=True)
                     try:
                         p_enc = urllib.parse.quote(prompt)
                         url = f"https://text.pollinations.ai/{p_enc}?model=openai&system={urllib.parse.quote(identity_context)}"
@@ -152,7 +163,10 @@ elif selected == "Srijan (Images)":
     vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the visualization...")
     if st.button("🚀 INITIATE VISUALIZATION"):
         if vision:
-            with st.spinner("🔱 Orbital Synthesis..."):
+            with st.spinner("🔱 Orbital Synthesis in Progress..."):
                 v_enc = urllib.parse.quote(vision)
-                img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,1000)}"
-                st.image(img_url, use_container_width=True, caption=f"🔱 Synthesis for {st.session_state.commander_name}")
+                # Using a high-resolution Flux model with a random seed to prevent caching
+                img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,999999)}"
+                st.image(img_url, use_container_width=True, caption=f"🔱 Synthesis for Commander {st.session_state.commander_name}")
+        else:
+            st.warning("⚠️ Vision Matrix Prompt Empty. Please describe the target.")
