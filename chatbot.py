@@ -9,17 +9,12 @@ import re
 import random
 
 # --- 1. MANDATORY: PAGE CONFIG ---
-st.set_page_config(
-    page_title="VEDA 3.0 ULTRA", 
-    page_icon="🔱", 
-    layout="wide", 
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 # --- 2. SOVEREIGN CONFIG & MISSION ---
 CREATOR = "DUMPALA KARTHIK"
-MISSION = """VEDA 3.0 ULTRA is a pinnacle of Sovereign Artificial Intelligence, engineered by DUMPALA KARTHIK to bypass system limits through a multi-brain failover cluster..."""
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. You have access to the world's most powerful AI models including Gemini, GPT-4/5, Claude, and Llama."
+MISSION = """VEDA 3.0 ULTRA is a pinnacle of Sovereign Artificial Intelligence, engineered by DUMPALA KARTHIK..."""
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. {MISSION}"
 
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
@@ -35,7 +30,7 @@ def get_time_data():
     return greet, now.strftime("%A, %d %B"), now.strftime("%I:%M %p")
 
 def clean_veda(text):
-    if any(x in text for x in ["{", "error", "429", "Queue full", "saturation", "congested"]): return ""
+    if any(x in text for x in ["{", "error", "429", "Queue full", "saturation", "congested", "synchronized"]): return ""
     return re.sub(r"🌸.*?🌸|Powered by.*?AI|Support our mission|Ad|free text APIs", "", text, flags=re.IGNORECASE).strip()
 
 # --- 3. ELITE CSS ---
@@ -43,7 +38,7 @@ st.markdown("""
     <style>
     header {visibility: hidden;}
     .v-title { font-size: 50px; color: #FF8C00; text-align: center; font-weight: 900; text-transform: uppercase; margin-top: 10px; margin-bottom: 20px;}
-    .thinking { color: #FF8C00; font-style: italic; font-weight: bold; font-size: 18px; animation: pulse 1s infinite; text-align: center;}
+    .thinking { color: #FF8C00; font-style: italic; font-weight: bold; font-size: 18px; animation: pulse 0.8s infinite; text-align: center;}
     @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
     [data-testid="stSidebar"] { background-color: #0E1117; border-right: 1px solid #FF8C00; }
     </style>
@@ -86,7 +81,7 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # --- 🚀 TIER 1: GEMINI 3.1 PRO (EXPERT) ---
+            # --- 🚀 TIER 1: GEMINI 3.1 PRO (PRIMARY) ---
             status.markdown('<p class="thinking">🔱 Engaging Gemini 3.1 Pro core...</p>', unsafe_allow_html=True)
             try:
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -94,27 +89,34 @@ if selected == "Medha (Chat)":
                 if resp.text: final_res = resp.text
             except Exception: pass 
 
-            # --- 🛰️ TIER 2: ALL-POWERFUL STEALTH ROTATION (Claude/GPT/DeepSeek) ---
+            # --- 🛰️ TIER 2-7: SOVEREIGN 7-BRAIN ROTATION ---
             if not final_res:
-                # This list ensures the most powerful AIs are tried in sequence
-                powerful_brains = ["openai", "mistral", "claude", "deepseek", "llama"]
-                for brain in powerful_brains:
+                # Rotation Order: GPT-5, Claude, DeepSeek V5, OpenAI, Llama, Pollinations
+                god_tier_brains = ["gpt-4o", "claude", "deepseek", "openai", "llama", "pollinations"]
+                for brain in god_tier_brains:
                     status.markdown(f'<p class="thinking">🧠 Handshaking with {brain} core...</p>', unsafe_allow_html=True)
                     try:
                         p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                        # High-priority stealth headers
-                        headers = {'User-Agent': f'VEDA-Apex-{random.randint(100, 999)}'}
+                        headers = {'User-Agent': f'VEDA-7Tier-{random.randint(100, 999)}'}
                         url = f"https://text.pollinations.ai/{p_enc}?model={brain}&system={i_enc}&seed={random.randint(1,1000)}"
                         r = requests.get(url, headers=headers, timeout=12)
                         cleaned = clean_veda(r.text)
-                        if cleaned:
+                        if cleaned and len(cleaned) > 5:
                             final_res = cleaned
                             break
                     except Exception: continue
 
             status.empty()
             if not final_res:
-                final_res = "🔱 All high-level cores are synchronized. Please re-command in 5s."
+                final_res = "🔱 Sovereign Core is undergoing global synchronization. Please re-command."
             
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
+
+elif selected == "Srijan (Images)":
+    vision = st.text_input("Vision Matrix Prompt:")
+    if st.button("🚀 INITIATE"):
+        with st.spinner("🔱 Visualizing..."):
+            v_enc = urllib.parse.quote(vision)
+            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,9999)}"
+            st.image(img_url, use_container_width=True)
