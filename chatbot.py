@@ -1,6 +1,19 @@
 import streamlit as st
-from google.genai import Client
-from ddgs import DDGS
+
+# --- 1. SOVEREIGN FAIL-SAFE IMPORTS ---
+try:
+    from duckduckgo_search import DDGS
+except ImportError:
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        st.error("🔱 CRITICAL: SATELLITE ENGINE (DDGS) OFFLINE. CHECK REQUIREMENTS.TXT")
+
+try:
+    from google.genai import Client
+except ImportError:
+    st.error("🔱 CRITICAL: GOOGLE GENAI ENGINE OFFLINE.")
+
 import requests
 import urllib.parse
 from datetime import datetime
@@ -9,14 +22,14 @@ from streamlit_option_menu import option_menu
 import os
 import random
 
-# --- 1. SOVEREIGN CONFIGURATION ---
+# --- 2. SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 
-# --- 2. IDENTITY & MISSION ---
+# --- 3. IDENTITY & MISSION ---
 CREATOR = "DUMPALA KARTHIK"
 MISSION = "VEDA 3.0 ULTRA: A pinnacle of Sovereign AI engineered by DUMPALA KARTHIK using satellite-linked global knowledge."
 
-# --- 3. CLOUD-NATIVE SATELLITE ENGINE ---
+# --- 4. CLOUD-NATIVE SATELLITE ENGINE ---
 def cloud_satellite_harvest(query="latest technology 2026"):
     """Automatically pulls real-time data from the web mesh"""
     try:
@@ -30,16 +43,16 @@ def cloud_satellite_harvest(query="latest technology 2026"):
                 structured_data += f"TITLE: {r.get('title', 'N/A')}\n"
                 structured_data += f"DATA: {r.get('body', 'N/A')}\n\n"
             return structured_data
-    except Exception as e:
-        return f"📡 Satellite Uplink Failure: {e}"
+    except Exception:
+        return "📡 Satellite Uplink Failure. Switching to Internal Logic Path."
 
-# --- 4. SESSION STATE INITIALIZATION ---
+# --- 5. SESSION STATE INITIALIZATION ---
 if "commander_name" not in st.session_state:
     st.session_state.commander_name = None
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# --- 5. ELITE UI STYLING (NO BOXES) ---
+# --- 6. ELITE UI STYLING (NO BOXES) ---
 st.markdown("""
     <style>
     header {visibility: hidden;}
@@ -60,7 +73,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 6. TIME & GREETING ENGINE ---
+# --- 7. TIME & GREETING ENGINE ---
 def get_dynamic_greeting():
     ist_zone = pytz.timezone('Asia/Kolkata')
     now = datetime.now(ist_zone)
@@ -71,7 +84,7 @@ def get_dynamic_greeting():
     else: greet = "GOOD NIGHT"
     return greet, now.strftime("%I:%M %p")
 
-# --- 7. AUTHORIZATION WALL ---
+# --- 8. AUTHORIZATION WALL ---
 if st.session_state.commander_name is None:
     st.markdown('<div class="v-title">🔱 VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
     st.markdown('<div class="v-subtitle">SECURE UPLINK: AWAITING AUTHORIZATION...</div>', unsafe_allow_html=True)
@@ -82,12 +95,12 @@ if st.session_state.commander_name is None:
             st.rerun()
     st.stop()
 
-# --- 8. DASHBOARD HEADER ---
+# --- 9. DASHBOARD HEADER ---
 greet, time_str = get_dynamic_greeting()
 st.markdown(f'<div class="v-title">{greet}, {st.session_state.commander_name}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="v-subtitle">SATELLITE SYNC: ACTIVE | {time_str} IST</div>', unsafe_allow_html=True)
 
-# --- 9. SIDEBAR NAVIGATION ---
+# --- 10. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.markdown(f"<h2 style='color:#FF8C00; text-align:center;'>🔱 VEDA 3.0</h2>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align:center; color:gray;'>STATION: VISAKHAPATNAM</p>", unsafe_allow_html=True)
@@ -102,7 +115,7 @@ with st.sidebar:
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 10. CORE INTELLIGENCE (MEDHA) ---
+# --- 11. CORE INTELLIGENCE (MEDHA) ---
 if selected == "Medha (Chat)":
     # Render History
     for msg in st.session_state.chat_history:
@@ -141,15 +154,15 @@ if selected == "Medha (Chat)":
                         contents=f"{identity_context}\n\nSATELLITE DATA:\n{world_knowledge}\n\nUSER REQUEST: {prompt}"
                     )
                     if resp.text: final_res = resp.text
-                except Exception as e:
-                    # SECONDARY UPLINK: POLLINATIONS MESH
-                    status.markdown(f'<p class="thinking">⚠️ Primary Link Error. Re-routing Node...</p>', unsafe_allow_html=True)
+                except Exception:
+                    # SECONDARY UPLINK: POLLINATIONS MESH (FAILOVER)
+                    status.markdown(f'<p class="thinking">⚠️ Primary Link Congested. Re-routing Node...</p>', unsafe_allow_html=True)
                     try:
                         p_enc = urllib.parse.quote(prompt)
                         url = f"https://text.pollinations.ai/{p_enc}?model=openai&system={urllib.parse.quote(identity_context)}"
                         r = requests.get(url, timeout=15)
                         final_res = r.text
-                    except:
+                    except Exception:
                         final_res = "🔱 Satellite connection lost. Mesh reset required."
 
             status.empty()
@@ -157,7 +170,7 @@ if selected == "Medha (Chat)":
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
-# --- 11. VISUAL SYNTHESIS (SRIJAN) ---
+# --- 12. VISUAL SYNTHESIS (SRIJAN) ---
 elif selected == "Srijan (Images)":
     st.markdown("<h3 style='text-align:center; color:#FF8C00;'>SRIJAN VISUALIZER</h3>", unsafe_allow_html=True)
     vision = st.text_input("Vision Matrix Prompt:", placeholder="Describe the visualization...")
@@ -165,7 +178,6 @@ elif selected == "Srijan (Images)":
         if vision:
             with st.spinner("🔱 Orbital Synthesis in Progress..."):
                 v_enc = urllib.parse.quote(vision)
-                # Using a high-resolution Flux model with a random seed to prevent caching
                 img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,999999)}"
                 st.image(img_url, use_container_width=True, caption=f"🔱 Synthesis for Commander {st.session_state.commander_name}")
         else:
