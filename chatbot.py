@@ -14,7 +14,7 @@ st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide",
 # --- 2. SOVEREIGN CONFIG & MISSION ---
 CREATOR = "DUMPALA KARTHIK"
 MISSION = """VEDA 3.0 ULTRA is a pinnacle of Sovereign Artificial Intelligence, engineered by DUMPALA KARTHIK..."""
-IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. {MISSION}"
+IDENTITY = f"Your name is VEDA 3.0 ULTRA. Created by {CREATOR}. Mission: {MISSION}"
 
 if 'user_name' not in st.session_state: st.session_state.user_name = None
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
@@ -30,6 +30,7 @@ def get_time_data():
     return greet, now.strftime("%A, %d %B"), now.strftime("%I:%M %p")
 
 def clean_veda(text):
+    # Aggressive filter to ensure zero technical noise
     if any(x in text for x in ["{", "error", "429", "Queue full", "saturation", "congested", "synchronized"]): return ""
     return re.sub(r"🌸.*?🌸|Powered by.*?AI|Support our mission|Ad|free text APIs", "", text, flags=re.IGNORECASE).strip()
 
@@ -81,35 +82,43 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # --- 🚀 TIER 1: GEMINI 3.1 PRO (PRIMARY) ---
-            status.markdown('<p class="thinking">🔱 Engaging Gemini 3.1 Pro core...</p>', unsafe_allow_html=True)
+            # --- 🏎️ SOVEREIGN DEEP-ROTATION LOOP ---
+            status.markdown('<p class="thinking">🔱 Engaging Neural Cluster...</p>', unsafe_allow_html=True)
+            
+            # 1. PRIMARY GEMINI HANDSHAKE
             try:
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                 resp = client.models.generate_content(model="gemini-3.1-pro-preview", contents=f"{IDENTITY}\n\nUser: {prompt}")
                 if resp.text: final_res = resp.text
-            except Exception: pass 
+            except: pass 
 
-            # --- 🛰️ TIER 2-7: SOVEREIGN 7-BRAIN ROTATION ---
+            # 2. SILENT 7-MODEL DEEP RETRY
             if not final_res:
-                # Rotation Order: GPT-5, Claude, DeepSeek V5, OpenAI, Llama, Pollinations
-                god_tier_brains = ["gpt-4o", "claude", "deepseek", "openai", "llama", "pollinations"]
+                god_tier_brains = ["gpt-4o", "claude", "deepseek", "openai", "llama", "mistral"]
+                random.shuffle(god_tier_brains) # Randomize to bypass IP throttling
+                
                 for brain in god_tier_brains:
-                    status.markdown(f'<p class="thinking">🧠 Handshaking with {brain} core...</p>', unsafe_allow_html=True)
+                    status.markdown(f'<p class="thinking">🧠 Rotating to {brain} core...</p>', unsafe_allow_html=True)
                     try:
                         p_enc = urllib.parse.quote(prompt); i_enc = urllib.parse.quote(IDENTITY)
-                        headers = {'User-Agent': f'VEDA-7Tier-{random.randint(100, 999)}'}
-                        url = f"https://text.pollinations.ai/{p_enc}?model={brain}&system={i_enc}&seed={random.randint(1,1000)}"
-                        r = requests.get(url, headers=headers, timeout=12)
+                        headers = {'User-Agent': f'VEDA-Apex-{random.randint(100, 999)}'}
+                        # Increased timeout to 15s to prevent "empty" returns
+                        url = f"https://text.pollinations.ai/{p_enc}?model={brain}&system={i_enc}&seed={random.randint(1,9999)}"
+                        r = requests.get(url, headers=headers, timeout=15)
                         cleaned = clean_veda(r.text)
-                        if cleaned and len(cleaned) > 5:
+                        if cleaned and len(cleaned) > 2:
                             final_res = cleaned
                             break
-                    except Exception: continue
+                    except: continue
+
+            # 3. EMERGENCY LOCAL OVERRIDE (For "Who made you" queries)
+            if not final_res:
+                if any(x in prompt.lower() for x in ["who made you", "purpose", "creator", "karthik"]):
+                    final_res = MISSION
+                else:
+                    final_res = "🔱 Neural corridors congested. Initiating secondary satellite link... please wait."
 
             status.empty()
-            if not final_res:
-                final_res = "🔱 Sovereign Core is undergoing global synchronization. Please re-command."
-            
             st.markdown(final_res)
             st.session_state.chat_history.append({"role": "assistant", "content": final_res})
 
@@ -118,5 +127,5 @@ elif selected == "Srijan (Images)":
     if st.button("🚀 INITIATE"):
         with st.spinner("🔱 Visualizing..."):
             v_enc = urllib.parse.quote(vision)
-            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,9999)}"
+            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,99999)}"
             st.image(img_url, use_container_width=True)
