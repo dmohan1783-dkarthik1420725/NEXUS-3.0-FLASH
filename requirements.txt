@@ -1,6 +1,5 @@
-streamlit
-google-genai
+streamlit==1.55.0
+google-genai==1.68.0
 duckduckgo_search
-streamlit-option_menu
-pytz
-requests
+pytz==2026.1
+requests==2.33.0
