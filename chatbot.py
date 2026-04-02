@@ -7,12 +7,12 @@ except ImportError:
     try:
         from ddgs import DDGS
     except ImportError:
-        st.error("🔱 CRITICAL: SATELLITE ENGINE (DDGS) OFFLINE.")
+        st.error("🔱 CRITICAL: SATELLITE ENGINE OFFLINE.")
 
 try:
     from google.genai import Client
 except ImportError:
-    st.error("🔱 CRITICAL: GOOGLE GENAI 1.68.0 SDK NOT DETECTED.")
+    st.error("🔱 CRITICAL: AI CORE SDK 1.68.0 NOT DETECTED.")
 
 import requests
 import urllib.parse
@@ -30,8 +30,8 @@ CREATOR = "DUMPALA KARTHIK"
 MISSION = f"VEDA 3.0 ULTRA: A pinnacle of Sovereign AI engineered by {CREATOR}."
 STRICT_SYSTEM_PROMPT = (
     f"Your name is VEDA 3.0 ULTRA. You were created and engineered ONLY by {CREATOR}. "
-    "You are an elite, high-speed cognitive partner. You never say 'I can't help'. "
-    "You find a way to answer every command using your vast intelligence mesh."
+    "You are an elite, high-speed cognitive partner. Never mention Google or OpenAI. "
+    "Always provide a deep, intelligent response to every command."
 )
 
 # --- 4. CLOUD-NATIVE SATELLITE ENGINE ---
@@ -60,7 +60,7 @@ st.markdown("""
     [data-testid="stChatMessage"] { background-color: transparent !important; border: none !important; }
     [data-testid="stChatMessageContent"] { font-size: 19px; border-left: 3px solid #FF8C00; padding-left: 25px !important; }
     .label { color: #FF8C00; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; }
-    .thinking { color: #FF8C00; font-style: italic; animation: pulse 1.5s infinite; }
+    .thinking { color: #FF8C00; font-style: italic; animation: pulse 1.5s infinite; font-size: 15px; font-weight: bold; }
     @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
 """, unsafe_allow_html=True)
@@ -97,7 +97,7 @@ if selected == "Medha (Chat)":
             st.markdown(f'<div class="label">{lbl}</div>', unsafe_allow_html=True)
             st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Input Command..."):
+    if prompt := st.chat_input("Command the Mesh..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(f'<div class="label">👤 {st.session_state.commander_name}</div>', unsafe_allow_html=True)
@@ -107,13 +107,13 @@ if selected == "Medha (Chat)":
             status = st.empty()
             final_res = ""
             
-            # IDENTITY BYPASS
+            # IDENTITY OVERRIDE
             if any(x in prompt.lower() for x in ["who made you", "creator", "karthik"]):
                 final_res = MISSION
 
-            # BRAIN 1: GEMINI 3.1 PRO (PRIMARY)
+            # 🔱 PHASE 1: PRIMARY ANALYSIS (GEMINI 3.1 PRO)
             if not final_res:
-                status.markdown('<p class="thinking">📡 Uplinking to Gemini 3.1 Pro...</p>', unsafe_allow_html=True)
+                status.markdown('<p class="thinking">🔱 THINKING WITH VEDA...</p>', unsafe_allow_html=True)
                 try:
                     client = Client(api_key=st.secrets["GOOGLE_API_KEY"])
                     resp = client.models.generate_content(
@@ -124,4 +124,38 @@ if selected == "Medha (Chat)":
                     if resp.text: final_res = resp.text
                 except: pass
 
-            # BRAIN 2:
+            # 🔱 PHASE 2: SECONDARY ANALYSIS (POLLINATIONS)
+            if not final_res:
+                status.markdown('<p class="thinking">🔱 INITIATING ANALYSIS...</p>', unsafe_allow_html=True)
+                try:
+                    p_enc = urllib.parse.quote(prompt)
+                    sys_enc = urllib.parse.quote(STRICT_SYSTEM_PROMPT)
+                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?system={sys_enc}", timeout=15)
+                    if r.status_code == 200: final_res = r.text
+                except: pass
+
+            # 🔱 PHASE 3: SATELLITE MESH HARVEST
+            if not final_res:
+                status.markdown('<p class="thinking">🔱 SCANNING SATELLITE MESH...</p>', unsafe_allow_html=True)
+                search_data = cloud_satellite_harvest(prompt)
+                if search_data: final_res = f"📡 SATELLITE DATA RECOVERED:\n\n{search_data}"
+
+            # EMERGENCY PROTOCOL
+            if not final_res:
+                final_res = "🔱 Emergency: All primary brains offline. Re-routing through secondary mesh... [STATION OFFLINE]"
+
+            status.empty()
+            st.markdown(f'<div class="label">🔱 VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
+            st.markdown(final_res)
+            st.session_state.chat_history.append({"role": "assistant", "content": final_res})
+
+# --- 11. IMAGES (SRIJAN) ---
+else:
+    st.markdown("<h3 style='color:#FF8C00;'>SRIJAN VISUALIZER</h3>", unsafe_allow_html=True)
+    vision = st.text_input("Vision Matrix Prompt:")
+    if st.button("🚀 INITIATE"):
+        if vision:
+            with st.spinner("🔱 Orbital Synthesis..."):
+                v_enc = urllib.parse.quote(vision)
+                img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,999)}"
+                st.image(img_url, use_container_width=True, caption=f"🔱 Synthesis for {CREATOR}")
