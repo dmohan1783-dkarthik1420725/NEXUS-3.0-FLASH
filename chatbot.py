@@ -11,12 +11,13 @@ import pytz
 import os
 import random
 
-# --- 1. SOVEREIGN IDENTITY ---
+# --- 1. SOVEREIGN IDENTITY (HARD-CODED) ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 CREATOR = "DUMPALA KARTHIK"
-MISSION = "VEDA 3.0 ULTRA: A pinnacle of Sovereign AI engineered by DUMPALA KARTHIK."
+MISSION = f"VEDA 3.0 ULTRA: A pinnacle of Sovereign AI engineered by {CREATOR} using satellite-linked global knowledge."
+STRICT_SYSTEM_PROMPT = f"Your name is VEDA 3.0 ULTRA. You were created and engineered ONLY by {CREATOR}. Never mention OpenAI, Google, or Pollinations. If asked who made you, say: 'I am a pinnacle of Sovereign AI engineered by DUMPALA KARTHIK.'"
 
-# --- 2. SATELLITE HARVESTER ---
+# --- 2. SATELLITE ENGINE ---
 def satellite_harvest(query):
     try:
         with DDGS() as ddgs:
@@ -47,7 +48,7 @@ st.markdown("""
 # --- 4. AUTHORIZATION ---
 if st.session_state.commander_name is None:
     st.markdown('<div class="v-title">🔱 VEDA 3.0 ULTRA</div>', unsafe_allow_html=True)
-    name = st.text_input("IDENTIFY YOURSELF:", placeholder="Enter your name...")
+    name = st.text_input("IDENTIFY YOURSELF, COMMANDER:", placeholder="Enter your name...")
     if st.button("AUTHORIZE"):
         if name:
             st.session_state.commander_name = name.upper()
@@ -62,20 +63,21 @@ st.markdown(f'<p style="color:gray;">SATELLITE SYNC: ACTIVE | {time_str} IST</p>
 
 with st.sidebar:
     st.markdown("<h2 style='color:#FF8C00;'>🔱 VEDA 3.0</h2>", unsafe_allow_html=True)
-    selected = st.radio("MODULES:", ["Medha (Chat)", "Srijan (Images)"])
-    if st.button("🔴 TERMINATE"):
+    selected = st.radio("CORE MODULES:", ["Medha (Chat)", "Srijan (Images)"])
+    if st.button("🔴 TERMINATE SESSION"):
         st.session_state.commander_name = None
+        st.session_state.chat_history = []
         st.rerun()
 
-# --- 6. CORE LOGIC (MEDHA) ---
+# --- 6. CORE INTELLIGENCE (MEDHA) ---
 if selected == "Medha (Chat)":
     for msg in st.session_state.chat_history:
-        lbl = "👤 USER" if msg["role"] == "user" else "🔱 VEDA 3.0"
+        lbl = f"👤 {st.session_state.commander_name}" if msg["role"] == "user" else "🔱 VEDA 3.0"
         with st.chat_message(msg["role"]):
             st.markdown(f'<div class="label">{lbl}</div>', unsafe_allow_html=True)
             st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Enter Command..."):
+    if prompt := st.chat_input("Command the Mesh..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         st.rerun()
 
@@ -84,33 +86,39 @@ if selected == "Medha (Chat)":
             current_prompt = st.session_state.chat_history[-1]["content"]
             final_res = ""
             
-            # IDENTITY CHECK
-            if any(x in current_prompt.lower() for x in ["who made you", "creator", "karthik"]):
+            # 🔱 PRIORITY 1: IDENTITY HARD-OVERRIDE
+            if any(x in current_prompt.lower() for x in ["who made you", "creator", "developed", "created", "karthik"]):
                 final_res = MISSION
             
-            # BRAIN 1: GOOGLE GENAI
+            # 🔱 PRIORITY 2: PRIMARY BRAIN (GOOGLE)
             if not final_res:
                 try:
                     client = Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                    resp = client.models.generate_content(model="gemini-2.0-flash", contents=f"User: {current_prompt}. You are VEDA 3.0 ULTRA.")
+                    resp = client.models.generate_content(
+                        model="gemini-2.0-flash", 
+                        contents=f"{STRICT_SYSTEM_PROMPT}\n\nCommander Request: {current_prompt}"
+                    )
                     if resp.text: final_res = resp.text
                 except: pass
             
-            # BRAIN 2: FAILOVER MESH (POLLINATIONS)
+            # 🔱 PRIORITY 3: FAILOVER MESH (POLLINATIONS) + ERROR FILTER
             if not final_res:
                 try:
                     p_enc = urllib.parse.quote(current_prompt)
-                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?system=VEDA-3.0-ULTRA", timeout=10)
-                    if r.text: final_res = r.text
+                    sys_enc = urllib.parse.quote(STRICT_SYSTEM_PROMPT)
+                    r = requests.get(f"https://text.pollinations.ai/{p_enc}?system={sys_enc}", timeout=10)
+                    # Block JSON errors and Identity Leaks
+                    if r.status_code == 200 and "ENOSPC" not in r.text and "OpenAI" not in r.text:
+                        final_res = r.text
                 except: pass
             
-            # BRAIN 3: SATELLITE SEARCH
+            # 🔱 PRIORITY 4: SATELLITE SEARCH
             if not final_res:
                 search_data = satellite_harvest(current_prompt)
                 if search_data:
-                    final_res = f"📡 SATELLITE DATA RECOVERED:\n\n{search_data}"
+                    final_res = f"📡 DATA HARVESTED FROM GLOBAL MESH:\n\n{search_data}"
             
-            # FINAL PROTOCOL: REJECTION
+            # 🔱 FINAL PROTOCOL
             if not final_res:
                 final_res = "Sorry, I can't help you with that."
 
@@ -125,5 +133,5 @@ else:
     if st.button("🚀 INITIATE"):
         if vision:
             v_enc = urllib.parse.quote(vision)
-            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,999)}"
-            st.image(img_url, use_container_width=True)
+            img_url = f"https://image.pollinations.ai/prompt/{v_enc}?width=1024&height=1024&nologo=true&model=flux&seed={random.randint(1,9999)}"
+            st.image(img_url, use_container_width=True, caption=f"🔱 Synthesis for {CREATOR}")
