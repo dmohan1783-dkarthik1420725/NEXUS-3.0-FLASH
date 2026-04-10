@@ -12,7 +12,7 @@ st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     .stTextInput>div>div>input { background-color: #262730; color: white; border: 1px solid #00d4ff; }
-    .centered-title { text-align: center; color: #00d4ff; text-shadow: 2px 2px #000000; font-family: 'Courier New', Courier, monospace; }
+    .centered-title { text-align: center; color: #00d4ff; text-shadow: 2px 2px #000000; font-family: 'Courier New', Courier, monospace; margin-top: -50px;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -36,17 +36,16 @@ with st.sidebar:
     st.caption("Developed by DUMPALA KARTHIK")
 
 # 2. CORE BRAIN INITIALIZATION
+# Secure key retrieval from Streamlit Secrets
 client = None
 try:
-    if "GEMINI_API_KEY" in st.secrets:
-        API_KEY = st.secrets["GEMINI_API_KEY"]
-        client = genai.Client(api_key=API_KEY)
-except Exception:
-    client = None
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
+    client = genai.Client(api_key=API_KEY)
+except Exception as e:
+    st.sidebar.error("❌ Key Uplink Failed")
 
 # --- MODE: MEDHA (CHAT & SEARCH) ---
 if mode == "MEDHA (CHAT)":
-    # Centered Title as Commanded
     st.markdown("<h1 class='centered-title'>VEDA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
     
     if "messages" not in st.session_state:
@@ -65,15 +64,16 @@ if mode == "MEDHA (CHAT)":
             response = None
             full_response = ""
             
-            with st.status("🔱 VEDA IS ANALYZING THE MESH...", expanded=True) as status:
+            with st.status("🔱 THINKING WITH VEDA...", expanded=True) as status:
                 if client is None:
-                    full_response = "❌ UPLINK FAILED: API Key missing in Streamlit Secrets. Access denied."
+                    full_response = "❌ UPLINK FAILED: Check Secrets for GOOGLE_API_KEY."
                     status.update(label="🔱 SECURITY ERROR", state="error")
                 else:
                     try:
+                        st.write("Accessing 2026 Search Mesh...")
                         search_tool = types.Tool(google_search=types.GoogleSearch())
                         response = client.models.generate_content(
-                            model='gemini-1.5-pro',
+                            model='gemini-2.0-flash', # Optimized for high-speed search
                             contents=prompt,
                             config=types.GenerateContentConfig(tools=[search_tool])
                         )
@@ -86,23 +86,25 @@ if mode == "MEDHA (CHAT)":
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # Safe Grounding Check to prevent NameError
-            if response and hasattr(response, 'candidates') and response.candidates[0].grounding_metadata:
+            if response and response.candidates and response.candidates[0].grounding_metadata:
                 with st.expander("📡 Verified Search Sources"):
                     search_meta = response.candidates[0].grounding_metadata.search_entry_point
                     if search_meta:
                         st.html(search_meta.rendered_content)
 
-# --- MODE: SRIJAN (IMAGE GENERATION via POLLINATIONS) ---
+# --- MODE: SRIJAN (IMAGE GENERATION) ---
 elif mode == "SRIJAN (IMAGE)":
     st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL SYNTHESIS</h1>", unsafe_allow_html=True)
     
-    img_prompt = st.text_input("Describe visual entity for synthesis:", placeholder="e.g., A cybernetic Trishul in deep space...")
+    img_prompt = st.text_input("Describe visual entity for synthesis:", placeholder="e.g., A cybernetic city in Hyderabad 2026...")
     
     if st.button("SYNTHESIZE IMAGE"):
         if img_prompt:
             with st.spinner("🔱 SRIJAN IS CONSTRUCTING VISUAL DATA..."):
+                # Using your POLLINATIONS_KEY for high-priority synthesis
+                p_key = st.secrets["POLLINATIONS_KEY"]
                 seed = datetime.now().microsecond 
-                image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true"
+                # Encoded URL with API Key authorization
+                image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
                 st.image(image_url, caption=f"VEDA Synthesis: {img_prompt}", use_container_width=True)
                 st.success("🔱 Visual Reconstruction Complete.")
