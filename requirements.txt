@@ -3,3 +3,5 @@ google-genai==1.68.0
 duckduckgo_search
 pytz==2026.1
 requests==2.33.0
+streamlit
+streamlit-option-menu
