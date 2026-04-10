@@ -7,18 +7,27 @@ import pytz
 # --- VEDA 3.0 ULTRA: SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 
-# Elite CSS for UI centering and Sovereign Aesthetics
+# Elite CSS for UI centering, Sovereign Aesthetics, and ORANGE Text
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    .stTextInput>div>div>input { background-color: #262730; color: white; border: 1px solid #00d4ff; }
-    .centered-title { text-align: center; color: #00d4ff; text-shadow: 2px 2px #000000; font-family: 'Courier New', Courier, monospace; margin-top: -50px;}
+    .stTextInput>div>div>input { background-color: #262730; color: white; border: 1px solid #ff4b2b; }
+    /* Centered Title with Orange Thermal Effect */
+    .centered-title { 
+        text-align: center; 
+        color: #ff8c00; 
+        text-shadow: 2px 2px #000000; 
+        font-family: 'Courier New', Courier, monospace; 
+        margin-top: -50px;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # 1. SIDEBAR: THE TRISHUL MESH
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center; color: #00d4ff;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #ff8c00;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
@@ -36,9 +45,9 @@ with st.sidebar:
     st.caption("Developed by DUMPALA KARTHIK")
 
 # 2. CORE BRAIN INITIALIZATION
-# Secure key retrieval from Streamlit Secrets
 client = None
 try:
+    # Key must be stored in Streamlit Cloud Secrets as GOOGLE_API_KEY
     API_KEY = st.secrets["GOOGLE_API_KEY"]
     client = genai.Client(api_key=API_KEY)
 except Exception as e:
@@ -46,6 +55,7 @@ except Exception as e:
 
 # --- MODE: MEDHA (CHAT & SEARCH) ---
 if mode == "MEDHA (CHAT)":
+    # Centered Title in ORANGE
     st.markdown("<h1 class='centered-title'>VEDA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
     
     if "messages" not in st.session_state:
@@ -73,7 +83,7 @@ if mode == "MEDHA (CHAT)":
                         st.write("Accessing 2026 Search Mesh...")
                         search_tool = types.Tool(google_search=types.GoogleSearch())
                         response = client.models.generate_content(
-                            model='gemini-2.0-flash', # Optimized for high-speed search
+                            model='gemini-2.0-flash', 
                             contents=prompt,
                             config=types.GenerateContentConfig(tools=[search_tool])
                         )
@@ -94,6 +104,7 @@ if mode == "MEDHA (CHAT)":
 
 # --- MODE: SRIJAN (IMAGE GENERATION) ---
 elif mode == "SRIJAN (IMAGE)":
+    # Centered Title in ORANGE
     st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL SYNTHESIS</h1>", unsafe_allow_html=True)
     
     img_prompt = st.text_input("Describe visual entity for synthesis:", placeholder="e.g., A cybernetic city in Hyderabad 2026...")
@@ -101,10 +112,6 @@ elif mode == "SRIJAN (IMAGE)":
     if st.button("SYNTHESIZE IMAGE"):
         if img_prompt:
             with st.spinner("🔱 SRIJAN IS CONSTRUCTING VISUAL DATA..."):
-                # Using your POLLINATIONS_KEY for high-priority synthesis
-                p_key = st.secrets["POLLINATIONS_KEY"]
+                p_key = st.secrets.get("POLLINATIONS_KEY", "")
                 seed = datetime.now().microsecond 
-                # Encoded URL with API Key authorization
-                image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
-                st.image(image_url, caption=f"VEDA Synthesis: {img_prompt}", use_container_width=True)
-                st.success("🔱 Visual Reconstruction Complete.")
+                image_url = f"https
