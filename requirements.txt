@@ -5,3 +5,6 @@ pytz==2026.1
 requests==2.33.0
 streamlit
 streamlit-option-menu
+streamlit
+google-genai
+streamlit-option-menu
