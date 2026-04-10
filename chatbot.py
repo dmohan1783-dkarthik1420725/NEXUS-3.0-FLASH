@@ -1,69 +1,90 @@
 import streamlit as st
 from google import genai
 from google.genai import types
+import datetime
+import requests
 
-# --- VEDA 3.0 ULTRA: PRO-CLASS CONFIGURATION ---
+# --- VEDA 3.0 ULTRA: SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 
-st.title("🔱 VEDA 3.0 ULTRA")
-st.caption("Commander: DUMPALA KARTHIK | System: Gemini 3.1 Pro")
+# 1. SIDEBAR: THE TRISHUL MESH
+with st.sidebar:
+    st.markdown("<h1 style='text-align: center;'>🔱</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>VEDA 3.0 ULTRA</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Live Telemetry
+    now = datetime.datetime.now()
+    st.write(f"📅 **Date:** {now.strftime('%Y-%m-%d')}")
+    st.write(f"⌚ **Time:** {now.strftime('%H:%M:%S')} IST")
+    st.write("📍 **Station:** Hyderabad")
+    st.markdown("---")
+    
+    # Mode Selection
+    mode = st.radio("SELECT MODE:", ["MEDHA (CHAT)", "SRIJAN (IMAGE)"])
+    st.markdown("---")
+    st.caption("Developed by DUMPALA KARTHIK")
 
-# --- SECURE UPLINK ---
+# 2. CORE BRAIN INITIALIZATION
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=API_KEY)
 except:
-    st.error("🔱 SECURITY ERROR: GEMINI_API_KEY missing from secrets.")
-    st.stop()
+    client = None
 
-client = genai.Client(api_key=API_KEY)
+# --- MODE: MEDHA (CHAT & SEARCH) ---
+if mode == "MEDHA (CHAT)":
+    st.title("🔱 MEDHA: Intelligence Hub")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-# 1. Initialize Pro-Level Search Mesh
-search_tool = types.Tool(google_search=types.GoogleSearch())
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    if prompt := st.chat_input("Command Medha..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        with st.chat_message("assistant"):
+            with st.status("🔱 VEDA IS ANALYZING THE MESH...", expanded=True) as status:
+                if client is None:
+                    full_response = "❌ UPLINK FAILED: API Key Invalid or Missing in Streamlit Secrets."
+                    status.update(label="🔱 CRITICAL FAILURE", state="error")
+                else:
+                    try:
+                        search_tool = types.Tool(google_search=types.GoogleSearch())
+                        response = client.models.generate_content(
+                            model='gemini-1.5-pro',
+                            contents=prompt,
+                            config=types.GenerateContentConfig(tools=[search_tool])
+                        )
+                        full_response = response.text
+                        status.update(label="🔱 ANALYSIS COMPLETE", state="complete", expanded=False)
+                    except Exception as e:
+                        full_response = f"⚠️ Uplink Error: {str(e)}"
+                        status.update(label="🔱 MESH ERROR", state="error")
+            
+            st.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-# 2. Command Input
-if prompt := st.chat_input("Command VEDA..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        # COMMANDED: Shows "THINKING WITH VEDA" or "ANALYSIS"
-        with st.status("🔱 THINKING WITH VEDA...", expanded=True) as status:
-            try:
-                st.write("Initializing Gemini 3.1 Pro Brain...")
-                st.write("Intercepting Search Engine Data...")
+# --- MODE: SRIJAN (IMAGE GENERATION via POLLINATIONS) ---
+elif mode == "SRIJAN (IMAGE)":
+    st.title("🔱 SRIJAN: Visual Synthesis")
+    st.write("Powered by Pollinations AI Mesh")
+    
+    img_prompt = st.text_input("Describe the visual entity to synthesize:")
+    
+    if st.button("SYNTHESIZE IMAGE"):
+        if img_prompt:
+            with st.spinner("🔱 SRIJAN IS GENERATING VISUAL DATA..."):
+                # Pollinations AI bypass URL
+                encoded_prompt = img_prompt.replace(" ", "%20")
+                image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
                 
-                response = client.models.generate_content(
-                    model='gemini-1.5-pro', # Points to the 1.5/3.1 Pro architecture
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        tools=[search_tool],
-                        system_instruction="You are VEDA 3.0 ULTRA, the elite intelligence partner of Karthik Dumpala. Use search to verify all 2026 data."
-                    )
-                )
-                
-                full_response = response.text
-                status.update(label="🔱 ANALYSIS COMPLETE", state="complete", expanded=False)
-
-            except Exception as e:
-                st.error(f"Uplink Error: {e}")
-                full_response = "Emergency: Pro-mesh synchronization failed."
-                status.update(label="🔱 CRITICAL FAILURE", state="error")
-
-        st.markdown(full_response)
-        
-        # Grounding Metadata (Sources)
-        if response.candidates and response.candidates[0].grounding_metadata:
-            with st.expander("📡 Verified Search Sources"):
-                search_meta = response.candidates[0].grounding_metadata.search_entry_point
-                if search_meta:
-                    st.html(search_meta.rendered_content)
-
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.image(image_url, caption=f"Synthesized: {img_prompt}", use_container_width=True)
+                st.success("🔱 Visual Synthesis Successful.")
+        else:
+            st.warning("Please enter a visual command.")
