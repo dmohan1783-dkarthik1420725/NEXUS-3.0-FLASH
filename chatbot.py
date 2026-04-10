@@ -7,6 +7,15 @@ import pytz
 # --- VEDA 3.0 ULTRA: SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.0 ULTRA", page_icon="🔱", layout="wide")
 
+# Elite CSS for UI centering and Sovereign Aesthetics
+st.markdown("""
+    <style>
+    .main { background-color: #0e1117; color: #ffffff; }
+    .stTextInput>div>div>input { background-color: #262730; color: white; border: 1px solid #00d4ff; }
+    .centered-title { text-align: center; color: #00d4ff; text-shadow: 2px 2px #000000; font-family: 'Courier New', Courier, monospace; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # 1. SIDEBAR: THE TRISHUL MESH
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #00d4ff;'>🔱</h1>", unsafe_allow_html=True)
@@ -27,16 +36,18 @@ with st.sidebar:
     st.caption("Developed by DUMPALA KARTHIK")
 
 # 2. CORE BRAIN INITIALIZATION
+client = None
 try:
-    # Use st.secrets for safety. Key name must be GEMINI_API_KEY
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-    client = genai.Client(api_key=API_KEY)
+    if "GEMINI_API_KEY" in st.secrets:
+        API_KEY = st.secrets["GEMINI_API_KEY"]
+        client = genai.Client(api_key=API_KEY)
 except Exception:
     client = None
 
 # --- MODE: MEDHA (CHAT & SEARCH) ---
 if mode == "MEDHA (CHAT)":
-    st.title("🔱 MEDHA: Intelligence Hub")
+    # Centered Title as Commanded
+    st.markdown("<h1 class='centered-title'>VEDA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
     
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -51,12 +62,12 @@ if mode == "MEDHA (CHAT)":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            # INITIALIZE RESPONSE VARIABLE TO PREVENT NAMEERROR
             response = None
+            full_response = ""
             
             with st.status("🔱 VEDA IS ANALYZING THE MESH...", expanded=True) as status:
                 if client is None:
-                    full_response = "❌ UPLINK FAILED: API Key missing in Streamlit Secrets."
+                    full_response = "❌ UPLINK FAILED: API Key missing in Streamlit Secrets. Access denied."
                     status.update(label="🔱 SECURITY ERROR", state="error")
                 else:
                     try:
@@ -75,23 +86,23 @@ if mode == "MEDHA (CHAT)":
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # SAFE GROUNDING CHECK
-            if response and response.candidates and response.candidates[0].grounding_metadata:
+            # Safe Grounding Check to prevent NameError
+            if response and hasattr(response, 'candidates') and response.candidates[0].grounding_metadata:
                 with st.expander("📡 Verified Search Sources"):
                     search_meta = response.candidates[0].grounding_metadata.search_entry_point
                     if search_meta:
                         st.html(search_meta.rendered_content)
 
-# --- MODE: SRIJAN (IMAGE GENERATION) ---
+# --- MODE: SRIJAN (IMAGE GENERATION via POLLINATIONS) ---
 elif mode == "SRIJAN (IMAGE)":
-    st.title("🔱 SRIJAN: Visual Synthesis")
-    st.write("Generating through Pollinations AI Mesh")
+    st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL SYNTHESIS</h1>", unsafe_allow_html=True)
     
-    img_prompt = st.text_input("Describe visual entity:")
+    img_prompt = st.text_input("Describe visual entity for synthesis:", placeholder="e.g., A cybernetic Trishul in deep space...")
+    
     if st.button("SYNTHESIZE IMAGE"):
         if img_prompt:
-            with st.spinner("🔱 SRIJAN ANALYZING..."):
-                seed = now.microsecond # Randomize
+            with st.spinner("🔱 SRIJAN IS CONSTRUCTING VISUAL DATA..."):
+                seed = datetime.now().microsecond 
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true"
-                st.image(image_url, caption=f"VEDA Synthesis: {img_prompt}")
+                st.image(image_url, caption=f"VEDA Synthesis: {img_prompt}", use_container_width=True)
                 st.success("🔱 Visual Reconstruction Complete.")
