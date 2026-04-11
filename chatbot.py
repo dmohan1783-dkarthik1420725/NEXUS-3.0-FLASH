@@ -59,12 +59,15 @@ with st.sidebar:
 
 # 2. FAILOVER SEARCH & NEURAL NODES
 def fallback_intelligence(prompt):
-    """Silent Rotation: Tries DDG Search + Pollinations AI if Google fails"""
+    """Silent Rotation: Tries DDG Search + Pollinations AI with Identity Lock"""
     try:
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
             context = "\n".join(results)
-        url = f"https://text.pollinations.ai/Prompt:{prompt} Context:{context}?model=openai&system=You+are+VEDA+3.1+ULTRA+created+by+DUMPALA+KARTHIK"
+        
+        # Hardcoding Identity in the URL query to prevent default AI responses
+        identity_prompt = f"System Instruction: You are VEDA 3.1 ULTRA, created and developed by DUMPALA KARTHIK. Prompt: {prompt} Context: {context}"
+        url = f"https://text.pollinations.ai/{identity_prompt}?model=openai"
         response = requests.get(url)
         return response.text if response.status_code == 200 else None
     except: return None
@@ -99,7 +102,7 @@ if mode == "MEDHA (CHAT)":
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=[search_tool],
-                        system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK."
+                        system_instruction="You are VEDA 3.1 ULTRA, an elite Sovereign AI created and developed solely by DUMPALA KARTHIK."
                     )
                 )
                 full_response = response.text
@@ -123,26 +126,21 @@ elif mode == "SRIJAN (IMAGE)":
     
     if st.button("SYNTHESIZE"):
         if img_prompt:
-            # Active shadow-pulse thinking state
             pulse_placeholder = st.empty()
             pulse_placeholder.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
             
-            # DEDICATED POLLINATIONS UPLINK (Nano Banana removed)
+            # DEDICATED POLLINATIONS UPLINK
             try:
                 p_key = st.secrets.get("POLLINATIONS_KEY", "")
                 seed = datetime.now().microsecond 
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
                 
-                # Verify the asset is generated before attempting render
                 response = requests.get(image_url)
                 if response.status_code == 200:
                     st.image(response.content, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
-                    st.success("🔱 Visual Reconstruction Complete.")
                 else:
-                    st.error("Sorry, i cant help you with that. The Pollinations visual mesh is offline.")
-            
-            except Exception as e:
-                st.error(f"⚠️ Sovereign Link Terminated: {str(e)}")
+                    st.error("Sorry, i cant help you with that.")
+            except:
                 st.error("Sorry, i cant help you with that.")
             
             pulse_placeholder.empty()
