@@ -9,7 +9,7 @@ from duckduckgo_search import DDGS
 # --- VEDA 3.1 ULTRA: APEX SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
-# SOVEREIGN UI: Total Purge of standard elements, Orange Glow activation
+# SOVEREIGN UI: Total Purge, Orange Glow, and SHADOW PULSE Animation
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
@@ -18,10 +18,26 @@ st.markdown("""
     [data-testid="collapsedControl"] {display: none;}
     footer {visibility: hidden;}
     
+    /* Centered Orange Title */
     .centered-title { 
         text-align: center; color: #ff8c00; text-shadow: 2px 2px #000000; 
         font-family: 'Courier New', Courier, monospace; margin-top: -30px;
         font-weight: bold; letter-spacing: 2px;
+    }
+
+    /* SHADOW TO REAL ANIMATION */
+    @keyframes shadowPulse {
+        0% { opacity: 0.2; text-shadow: 0 0 5px #000; }
+        50% { opacity: 1; text-shadow: 0 0 20px #ff8c00; }
+        100% { opacity: 0.2; text-shadow: 0 0 5px #000; }
+    }
+    .thinking-text {
+        text-align: center;
+        color: #ff8c00;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.2rem;
+        animation: shadowPulse 2s infinite ease-in-out;
+        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -43,12 +59,10 @@ with st.sidebar:
 # 2. FAILOVER SEARCH & NEURAL NODES
 def secondary_search_and_think(prompt):
     try:
-        # Step 1: Search via DuckDuckGo Mesh
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
             context = "\n".join(results)
-        # Step 2: Think via Pollinations AI Mesh
-        url = f"https://text.pollinations.ai/Prompt: {prompt} Context: {context}?model=openai&system=You+are+VEDA+3.1+ULTRA+created+by+DUMPALA+KARTHIK"
+        url = f"https://text.pollinations.ai/Prompt:{prompt} Context:{context}?model=openai&system=You+are+VEDA+3.1+ULTRA+created+by+DUMPALA+KARTHIK"
         response = requests.get(url)
         return response.text if response.status_code == 200 else None
     except: return None
@@ -71,31 +85,31 @@ if mode == "MEDHA (CHAT)":
 
         with st.chat_message("assistant"):
             full_response = ""
-            with st.status("🔱 THINKING WITH VEDA...", expanded=True) as status:
-                # 1. PRIMARY: Gemini 3.1 Pro + Google Search
-                try:
-                    st.write("Initializing Google Search Grounding...")
-                    client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                    search_tool = types.Tool(google_search=types.GoogleSearch())
-                    response = client.models.generate_content(
-                        model='gemini-3.1-pro-preview',
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            tools=[search_tool],
-                            system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK. Use search to verify facts."
-                        )
+            # COMMANDED: Shadow Pulse thinking state
+            thinking_placeholder = st.empty()
+            thinking_placeholder.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
+            
+            # PRIMARY: Gemini 3.1 Pro + Google Search
+            try:
+                client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+                search_tool = types.Tool(google_search=types.GoogleSearch())
+                response = client.models.generate_content(
+                    model='gemini-3.1-pro-preview',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        tools=[search_tool],
+                        system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK."
                     )
-                    full_response = response.text
-                except:
-                    # 2. SILENT FAILOVER: DDG Search + Pollinations AI (Llama/GPT mix)
-                    st.write("Analysis in progress...")
-                    full_response = secondary_search_and_think(prompt)
+                )
+                full_response = response.text
+            except:
+                # SILENT FAILOVER: DDG Search + Pollinations AI
+                full_response = secondary_search_and_think(prompt)
 
-                if full_response:
-                    status.update(label="🔱 ANALYSIS COMPLETE", state="complete", expanded=False)
-                else:
-                    full_response = "Sorry, i cant help you with that."
-                    status.update(label="🔱 UPLINK OFFLINE", state="error")
+            thinking_placeholder.empty() # Remove the pulse after response
+            
+            if not full_response:
+                full_response = "Sorry, i cant help you with that."
             
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
@@ -105,7 +119,9 @@ elif mode == "SRIJAN (IMAGE)":
     st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL SYNTHESIS</h1>", unsafe_allow_html=True)
     img_prompt = st.text_input("Describe visual entity:", placeholder="Synthesis via VEDA...")
     if st.button("SYNTHESIZE"):
-        with st.spinner("🔱 ANALYSIS IN PROGRESS..."):
-            seed = datetime.now().microsecond 
-            image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={st.secrets.get('POLLINATIONS_KEY','')}"
-            st.image(image_url, caption="VEDA Visual Output for Commander Karthik")
+        pulse_placeholder = st.empty()
+        pulse_placeholder.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
+        seed = datetime.now().microsecond 
+        image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={st.secrets.get('POLLINATIONS_KEY','')}"
+        st.image(image_url, caption="VEDA Visual Output for Commander Karthik")
+        pulse_placeholder.empty()
