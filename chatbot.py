@@ -167,7 +167,7 @@ elif mode == "SRIJAN (IMAGE)":
             pulse_placeholder.empty()
             
             if final_image_bytes:
-                st.image(final_image_bytes, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
+                st.image(final_image_bytes, caption=f"VEDA Visual Output: {img_prompt}", use_container_width=True)
                 st.success("🔱 Visual Reconstruction Complete.")
             else:
-                st.error("Sorry, i cant help you with that. The visual mesh is offline.")
+                st.error("Sorry, i cant help you with that.")
