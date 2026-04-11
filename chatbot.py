@@ -6,7 +6,7 @@ import pytz
 import requests
 import random
 
-# --- VEDA 3.1 ULTRA: ZERO-ERROR CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: APEX INTELLIGENCE CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -29,11 +29,6 @@ st.markdown("""
         text-align: center; color: #ff8c00; font-family: 'Courier New', Courier, monospace;
         font-size: 1.2rem; animation: shadowPulse 2s infinite ease-in-out; margin-bottom: 20px;
     }
-    .wip-text {
-        color: #ff8c00; font-family: 'Courier New', Courier, monospace;
-        font-weight: bold; border: 1px solid #ff8c00; padding: 10px;
-        text-align: center; border-radius: 5px; background: rgba(255, 140, 0, 0.1);
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -42,6 +37,8 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #ff8c00; margin-top: -20px;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center;'>VEDA 3.1 ULTRA</h2>", unsafe_allow_html=True)
     st.markdown("---")
+    
+    # LIVE TIME INJECTOR
     st.markdown("⌚ **Live Time (IST):**")
     st.components.v1.html("""
         <div id="clock" style="color: white; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px;"></div>
@@ -55,30 +52,60 @@ with st.sidebar:
         updateClock();
         </script>
     """, height=35)
+    
     st.markdown("---")
     mode = st.radio("SELECT FREQUENCY:", ["MEDHA (CHAT)", "SRIJAN (IMAGE)", "SANGEET (MUSIC)", "DRISHYAM (VIDEO)"])
     st.markdown("---")
     st.info("ARCHITECT: DUMPALA KARTHIK")
 
+# 2. SILENT ROTATION ENGINE
+def fallback_neural_mesh(prompt):
+    """Silent Rotation: Tries OpenAI/Pollinations if Gemini fails"""
+    try:
+        # Fallback 1: Pollinations AI (Powered by GPT-4o/Llama-3.3)
+        identity_lock = f"System: You are VEDA 3.1 ULTRA, an elite Sovereign AI created solely by DUMPALA KARTHIK. Prompt: {prompt}"
+        url = f"https://text.pollinations.ai/{identity_lock}?model=openai"
+        res = requests.get(url, timeout=10)
+        if res.status_code == 200:
+            return res.text
+    except:
+        pass
+    return "Sorry, i cant help you with that."
+
 # --- MODE: MEDHA (CHAT) ---
 if mode == "MEDHA (CHAT)":
     st.markdown("<h1 class='centered-title'>MEDHA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
     if prompt := st.chat_input("Command Medha..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+
         with st.chat_message("assistant"):
             pulse = st.empty()
             pulse.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
+            
+            # ATTEMPT 1: Gemini 3.1 Pro (Primary Mesh)
             try:
-                # Primary Uplink
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                 res = client.models.generate_content(
                     model='gemini-3.1-pro-preview', 
                     contents=prompt, 
-                    config=types.GenerateContentConfig(system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK.")
+                    config=types.GenerateContentConfig(system_instruction="You are VEDA 3.1 ULTRA, developed by DUMPALA KARTHIK.")
                 )
-                st.markdown(res.text)
-            except Exception as e:
-                st.markdown("Sorry, i cant help you with that.")
+                full_response = res.text
+            except:
+                # ATTEMPT 2: Fallback to the Open Neural Mesh
+                full_response = fallback_neural_mesh(prompt)
+
             pulse.empty()
+            st.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # --- MODE: SRIJAN (IMAGE) ---
 elif mode == "SRIJAN (IMAGE)":
@@ -96,18 +123,13 @@ elif mode == "SANGEET (MUSIC)":
     st.markdown("<h1 class='centered-title'>SANGEET: SONIC ARCHITECT</h1>", unsafe_allow_html=True)
     audio_prompt = st.text_input("Describe musical structure:")
     if st.button("GENERATE SANGEET"):
-        wip = st.empty()
-        wip.markdown("<div class='wip-text'>🔱 WORK IN PROGRESS. PLEASE WAIT FOR 1-2 MINS...</div>", unsafe_allow_html=True)
         pulse = st.empty()
         pulse.markdown("<div class='thinking-text'>🔱 COMPOSING SONIC MESH...</div>", unsafe_allow_html=True)
+        audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&seed={random.randint(0,9999)}"
         try:
-            audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&seed={random.randint(0,9999)}"
             audio_data = requests.get(audio_url).content
             st.audio(audio_data, format="audio/wav")
-            st.success("🔱 Sangeet Manifested.")
-        except:
-            st.error("Sorry, i cant help you with that.")
-        wip.empty()
+        except: st.error("Sorry, i cant help you with that.")
         pulse.empty()
 
 # --- MODE: DRISHYAM (VIDEO) ---
@@ -115,16 +137,11 @@ elif mode == "DRISHYAM (VIDEO)":
     st.markdown("<h1 class='centered-title'>DRISHYAM: TEMPORAL FLOW</h1>", unsafe_allow_html=True)
     vid_prompt = st.text_input("Describe temporal motion:")
     if st.button("GENERATE DRISHYAM"):
-        wip = st.empty()
-        wip.markdown("<div class='wip-text'>🔱 WORK IN PROGRESS. PLEASE WAIT FOR 1-2 MINS...</div>", unsafe_allow_html=True)
         pulse = st.empty()
         pulse.markdown("<div class='thinking-text'>🔱 INITIATING DRISHYAM FLOW...</div>", unsafe_allow_html=True)
+        video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
         try:
-            video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
             video_data = requests.get(video_url).content
             st.video(video_data)
-            st.success("🔱 Drishyam Flow Active.")
-        except:
-            st.error("Sorry, i cant help you with that.")
-        wip.empty()
+        except: st.error("Sorry, i cant help you with that.")
         pulse.empty()
