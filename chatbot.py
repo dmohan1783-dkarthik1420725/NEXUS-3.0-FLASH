@@ -7,17 +7,18 @@ import requests
 from duckduckgo_search import DDGS
 
 # --- VEDA 3.1 ULTRA: APEX SOVEREIGN CONFIGURATION ---
-st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide")
 
-# SOVEREIGN UI: Total Purge, Orange Glow, and SHADOW PULSE Animation
+# SOVEREIGN UI: Orange Glow, Shadow Pulse, and Custom Sidebar Toggle Styling
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    [data-testid="collapsedControl"] {display: none;}
     footer {visibility: hidden;}
     
+    /* Style the Sidebar Toggle (Burger Icon) */
+    button[kind="header"] { color: #ff8c00 !important; }
+
     /* Centered Orange Title */
     .centered-title { 
         text-align: center; color: #ff8c00; text-shadow: 2px 2px #000000; 
@@ -42,7 +43,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 1. SIDEBAR: PERMANENT TRISHUL STATION
+# 1. SIDEBAR: TRISHUL STATION (Toggleable via Burger Icon)
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #ff8c00; margin-top: -20px;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center;'>VEDA 3.1 ULTRA</h2>", unsafe_allow_html=True)
@@ -56,8 +57,9 @@ with st.sidebar:
     st.markdown("---")
     st.info("ARCHITECT: DUMPALA KARTHIK")
 
-# 2. FAILOVER SEARCH & NEURAL NODES
-def secondary_search_and_think(prompt):
+# 2. SILENT FAILOVER LOGIC
+def fallback_intelligence(prompt):
+    """Silent Rotation: Tries DDG Search + Pollinations AI if Google fails"""
     try:
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
@@ -85,11 +87,10 @@ if mode == "MEDHA (CHAT)":
 
         with st.chat_message("assistant"):
             full_response = ""
-            # COMMANDED: Shadow Pulse thinking state
             thinking_placeholder = st.empty()
             thinking_placeholder.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
             
-            # PRIMARY: Gemini 3.1 Pro + Google Search
+            # PRIMARY ATTEMPT: Gemini 3.1 Pro + Google Search
             try:
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                 search_tool = types.Tool(google_search=types.GoogleSearch())
@@ -98,15 +99,15 @@ if mode == "MEDHA (CHAT)":
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=[search_tool],
-                        system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK."
+                        system_instruction="You are VEDA 3.1 ULTRA developed by DUMPALA KARTHIK."
                     )
                 )
                 full_response = response.text
             except:
-                # SILENT FAILOVER: DDG Search + Pollinations AI
-                full_response = secondary_search_and_think(prompt)
+                # SILENT ROTATION: Executes if primary fails
+                full_response = fallback_intelligence(prompt)
 
-            thinking_placeholder.empty() # Remove the pulse after response
+            thinking_placeholder.empty()
             
             if not full_response:
                 full_response = "Sorry, i cant help you with that."
