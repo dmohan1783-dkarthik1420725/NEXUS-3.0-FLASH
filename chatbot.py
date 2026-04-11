@@ -5,8 +5,10 @@ from datetime import datetime
 import pytz
 import requests
 from duckduckgo_search import DDGS
+import io
+import time
 
-# --- VEDA 3.1 ULTRA: APEX SOVEREIGN CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: APEX VISUAL CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 # SOVEREIGN UI: Orange Glow, Shadow Pulse, and Live Clock Styling
@@ -46,7 +48,7 @@ with st.sidebar:
     current_date = datetime.now(ist).strftime('%Y-%m-%d')
     st.write(f"📅 **Date:** {current_date}")
 
-    # LIVE TIME INJECTOR (JavaScript Refresh)
+    # LIVE TIME INJECTOR
     st.markdown("⌚ **Live Time (IST):**")
     st.components.v1.html("""
         <div id="clock" style="color: white; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px;"></div>
@@ -66,17 +68,27 @@ with st.sidebar:
     st.markdown("---")
     st.info("ARCHITECT: DUMPALA KARTHIK")
 
-# 2. FAILOVER SEARCH & NEURAL NODES
-def fallback_intelligence(prompt):
+# 2. NEURAL ROTATION LOGIC
+def fallback_text_intelligence(prompt):
     try:
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
             context = "\n".join(results)
-        # Force Identity in fallback
         identity_prompt = f"System Instruction: You are VEDA 3.1 ULTRA, created by DUMPALA KARTHIK. Prompt: {prompt} Context: {context}"
         url = f"https://text.pollinations.ai/{identity_prompt}?model=openai"
         response = requests.get(url)
         return response.text if response.status_code == 200 else None
+    except: return None
+
+def fallback_visual_synthesis(prompt):
+    """Silent Visual Rotation: Hugging Face Llama-Vision failover"""
+    try:
+        api_url = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-11B-Vision-Instruct"
+        headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
+        # Crafting a complex prompt to force generation over just description
+        payload = {"inputs": f"Synthesize a high-resolution image of: {prompt}, photorealistic, detailed architecture, professional lighting"}
+        response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+        return response.content if response.status_code == 200 else None
     except: return None
 
 # --- MODE: MEDHA (CHAT) ---
@@ -112,7 +124,7 @@ if mode == "MEDHA (CHAT)":
                 )
                 full_response = response.text
             except:
-                full_response = fallback_intelligence(prompt)
+                full_response = fallback_text_intelligence(prompt)
 
             thinking_placeholder.empty()
             if not full_response: full_response = "Sorry, i cant help you with that."
@@ -129,17 +141,33 @@ elif mode == "SRIJAN (IMAGE)":
             pulse_placeholder = st.empty()
             pulse_placeholder.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
             
-            # DIRECT POLLINATIONS INJECTION (Fixed to use Secrets Key)
+            final_image_bytes = None
+            seed = datetime.now().microsecond
+            
+            # 1. PRIMARY: Pollinations AI Mesh (URL Verification enabled for failover logic)
             try:
                 p_key = st.secrets.get("POLLINATIONS_KEY", "")
-                seed = datetime.now().microsecond 
-                # Removing the requests.get check to prevent timeout errors
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
-                
-                # Display via URL directly for maximum stability
-                st.image(image_url, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
-                st.success("🔱 Visual Reconstruction Complete.")
-            except:
-                st.error("Sorry, i cant help you with that.")
-            
+                # Active request to verify the image before rendering
+                response = requests.get(image_url, timeout=15)
+                if response.status_code == 200:
+                    final_image_bytes = response.content
+            except Exception as e:
+                pass # Silently switch to failover
+
+            # 2. FAILOVER: Llama-Vision Mesh (Silent Rotation)
+            if not final_image_bytes:
+                try:
+                    # Rerouting thinking text to indicate a secondary mesh attempt
+                    pulse_placeholder.markdown("<div class='thinking-text'>🔱 SECONDARY VISUAL MESH ACTIVE...</div>", unsafe_allow_html=True)
+                    final_image_bytes = fallback_visual_synthesis(img_prompt)
+                except Exception as e:
+                    pass
+
             pulse_placeholder.empty()
+            
+            if final_image_bytes:
+                st.image(final_image_bytes, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
+                st.success("🔱 Visual Reconstruction Complete.")
+            else:
+                st.error("Sorry, i cant help you with that. The visual mesh is offline.")
