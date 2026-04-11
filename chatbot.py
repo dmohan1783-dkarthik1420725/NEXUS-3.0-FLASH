@@ -137,7 +137,7 @@ elif mode == "SRIJAN (IMAGE)":
                 
                 response = requests.get(image_url)
                 if response.status_code == 200:
-                    st.image(response.content, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
+                    st.image(response.content, caption=f"VEDA Visual Output: {img_prompt}", use_container_width=True)
                 else:
                     st.error("Sorry, i cant help you with that.")
             except:
