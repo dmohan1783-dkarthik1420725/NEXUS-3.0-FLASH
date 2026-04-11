@@ -6,7 +6,7 @@ import pytz
 import requests
 import random
 
-# --- VEDA 3.1 ULTRA: APEX INTELLIGENCE CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: APEX INTEGRATED CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -37,8 +37,6 @@ with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #ff8c00; margin-top: -20px;'>🔱</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center;'>VEDA 3.1 ULTRA</h2>", unsafe_allow_html=True)
     st.markdown("---")
-    
-    # LIVE TIME INJECTOR
     st.markdown("⌚ **Live Time (IST):**")
     st.components.v1.html("""
         <div id="clock" style="color: white; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px;"></div>
@@ -52,60 +50,27 @@ with st.sidebar:
         updateClock();
         </script>
     """, height=35)
-    
     st.markdown("---")
     mode = st.radio("SELECT FREQUENCY:", ["MEDHA (CHAT)", "SRIJAN (IMAGE)", "SANGEET (MUSIC)", "DRISHYAM (VIDEO)"])
     st.markdown("---")
     st.info("ARCHITECT: DUMPALA KARTHIK")
 
-# 2. SILENT ROTATION ENGINE
-def fallback_neural_mesh(prompt):
-    """Silent Rotation: Tries OpenAI/Pollinations if Gemini fails"""
-    try:
-        # Fallback 1: Pollinations AI (Powered by GPT-4o/Llama-3.3)
-        identity_lock = f"System: You are VEDA 3.1 ULTRA, an elite Sovereign AI created solely by DUMPALA KARTHIK. Prompt: {prompt}"
-        url = f"https://text.pollinations.ai/{identity_lock}?model=openai"
-        res = requests.get(url, timeout=10)
-        if res.status_code == 200:
-            return res.text
-    except:
-        pass
-    return "Sorry, i cant help you with that."
+# 2. APEX CLIENT INITIALIZATION
+client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # --- MODE: MEDHA (CHAT) ---
 if mode == "MEDHA (CHAT)":
     st.markdown("<h1 class='centered-title'>MEDHA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
-    
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-
     if prompt := st.chat_input("Command Medha..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-
         with st.chat_message("assistant"):
             pulse = st.empty()
             pulse.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
-            
-            # ATTEMPT 1: Gemini 3.1 Pro (Primary Mesh)
             try:
-                client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                res = client.models.generate_content(
-                    model='gemini-3.1-pro-preview', 
-                    contents=prompt, 
-                    config=types.GenerateContentConfig(system_instruction="You are VEDA 3.1 ULTRA, developed by DUMPALA KARTHIK.")
-                )
-                full_response = res.text
+                res = client.models.generate_content(model='gemini-3.1-pro-preview', contents=prompt)
+                st.markdown(res.text)
             except:
-                # ATTEMPT 2: Fallback to the Open Neural Mesh
-                full_response = fallback_neural_mesh(prompt)
-
+                st.markdown("Sorry, i cant help you with that.")
             pulse.empty()
-            st.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # --- MODE: SRIJAN (IMAGE) ---
 elif mode == "SRIJAN (IMAGE)":
@@ -114,34 +79,46 @@ elif mode == "SRIJAN (IMAGE)":
     if st.button("SYNTHESIZE ART"):
         pulse = st.empty()
         pulse.markdown("<div class='thinking-text'>🔱 RENDERING SRIJAN...</div>", unsafe_allow_html=True)
-        image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
-        st.image(image_url, caption="VEDA Srijan Output", use_container_width=True)
+        # Using Gemini 3.1 Pro Image Preview for high-tier output
+        try:
+            res = client.models.generate_content(model='gemini-3.1-pro-image-preview', contents=img_prompt)
+            st.image(res.generated_images[0].bytes, caption="VEDA Srijan Output", use_container_width=True)
+        except:
+            # Pollinations Fallback
+            url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
+            st.image(url, caption="VEDA Srijan Failover Output", use_container_width=True)
         pulse.empty()
 
 # --- MODE: SANGEET (MUSIC) ---
 elif mode == "SANGEET (MUSIC)":
     st.markdown("<h1 class='centered-title'>SANGEET: SONIC ARCHITECT</h1>", unsafe_allow_html=True)
-    audio_prompt = st.text_input("Describe musical structure:")
+    audio_prompt = st.text_input("Describe musical structure (Lyria-3 Mesh):")
     if st.button("GENERATE SANGEET"):
         pulse = st.empty()
-        pulse.markdown("<div class='thinking-text'>🔱 COMPOSING SONIC MESH...</div>", unsafe_allow_html=True)
-        audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&seed={random.randint(0,9999)}"
+        pulse.markdown("<div class='thinking-text'>🔱 COMPOSING LYRIA MESH...</div>", unsafe_allow_html=True)
         try:
-            audio_data = requests.get(audio_url).content
-            st.audio(audio_data, format="audio/wav")
-        except: st.error("Sorry, i cant help you with that.")
+            # Primary: Lyria-3 High Fidelity
+            res = client.models.generate_content(model='lyria-3-pro-preview', contents=audio_prompt)
+            st.audio(res.generated_audio.bytes, format="audio/wav")
+        except:
+            # Fallback
+            audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&seed={random.randint(0,9999)}"
+            st.audio(requests.get(audio_url).content, format="audio/wav")
         pulse.empty()
 
 # --- MODE: DRISHYAM (VIDEO) ---
 elif mode == "DRISHYAM (VIDEO)":
     st.markdown("<h1 class='centered-title'>DRISHYAM: TEMPORAL FLOW</h1>", unsafe_allow_html=True)
-    vid_prompt = st.text_input("Describe temporal motion:")
+    vid_prompt = st.text_input("Describe temporal motion (Veo-3.1 Mesh):")
     if st.button("GENERATE DRISHYAM"):
         pulse = st.empty()
-        pulse.markdown("<div class='thinking-text'>🔱 INITIATING DRISHYAM FLOW...</div>", unsafe_allow_html=True)
-        video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
+        pulse.markdown("<div class='thinking-text'>🔱 INITIATING VEO FLOW...</div>", unsafe_allow_html=True)
         try:
-            video_data = requests.get(video_url).content
-            st.video(video_data)
-        except: st.error("Sorry, i cant help you with that.")
+            # Primary: Veo-3.1 Temporal Synthesis
+            res = client.models.generate_content(model='veo-3.1-generate-preview', contents=vid_prompt)
+            st.video(res.generated_videos[0].bytes)
+        except:
+            # Fallback
+            video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
+            st.video(requests.get(video_url).content)
         pulse.empty()
