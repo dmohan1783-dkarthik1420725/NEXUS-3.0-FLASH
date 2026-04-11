@@ -1,10 +1,7 @@
-streamlit==1.55.0
-google-genai==1.68.0
-duckduckgo_search
+streamlit==1.56.0
+google-genai==1.72.0
+duckduckgo-search==8.1.1
 pytz==2026.1
 requests==2.33.0
-streamlit
-streamlit-option-menu
-streamlit
-google-genai
-streamlit-option-menu
+streamlit-option-menu==0.4.0
+pillow==12.2.0
