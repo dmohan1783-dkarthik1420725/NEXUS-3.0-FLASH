@@ -4,13 +4,12 @@ from google.genai import types
 from datetime import datetime
 import pytz
 
-# --- VEDA 3.1 ULTRA: APEX CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide")
 
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    .stTextInput>div>div>input { background-color: #262730; color: white; border: 1px solid #ff4b2b; }
     .centered-title { 
         text-align: center; color: #ff8c00; text-shadow: 2px 2px #000000; 
         font-family: 'Courier New', Courier, monospace; margin-top: -50px;
@@ -27,21 +26,19 @@ with st.sidebar:
     ist = pytz.timezone('Asia/Kolkata')
     now = datetime.now(ist)
     st.write(f"📅 **Date:** {now.strftime('%Y-%m-%d')}")
-    st.write(f"⌚ **Time:** {now.strftime('%H:%M:%S')} IST")
-    st.write("📍 **Station:** Hyderabad")
+    st.write(f"📍 **Station:** Hyderabad")
     mode = st.radio("SELECT MODE:", ["MEDHA (CHAT)", "SRIJAN (IMAGE)"])
-    st.caption("Developed by DUMPALA KARTHIK")
+    st.markdown("---")
+    st.info("System Architect: DUMPALA KARTHIK")
 
 # 2. CORE BRAIN INITIALIZATION
-client = None
 try:
-    # Key must be stored in Streamlit Cloud Secrets as GOOGLE_API_KEY
     API_KEY = st.secrets["GOOGLE_API_KEY"]
     client = genai.Client(api_key=API_KEY)
 except:
     client = None
 
-# --- MODE: MEDHA (CHAT & SEARCH) ---
+# --- MODE: MEDHA (INTELLIGENT ROTATION) ---
 if mode == "MEDHA (CHAT)":
     st.markdown("<h1 class='centered-title'>VEDA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
     
@@ -58,25 +55,40 @@ if mode == "MEDHA (CHAT)":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            response = None
-            with st.status("🔱 THINKING WITH VEDA...", expanded=True) as status:
-                if client is None:
-                    full_response = "❌ UPLINK FAILED: Check Secrets."
-                else:
+            full_response = ""
+            # SOVEREIGN ROTATION LIST (Ranked by Power)
+            model_rotation = [
+                'gemini-3.1-pro-preview', 
+                'gemini-3.1-flash-lite-preview', 
+                'gemini-2.0-flash-lite'
+            ]
+            
+            with st.status("🔱 VEDA IS ANALYZING THE MESH...", expanded=True) as status:
+                for model_id in model_rotation:
                     try:
-                        st.write("Targeting Gemini 3.1 Pro Mesh...")
+                        st.write(f"Attempting Uplink: {model_id}...")
                         search_tool = types.Tool(google_search=types.GoogleSearch())
-                        # UPDATED MODEL ID FROM YOUR MANIFEST
                         response = client.models.generate_content(
-                            model='gemini-3.1-pro-preview', 
+                            model=model_id,
                             contents=prompt,
-                            config=types.GenerateContentConfig(tools=[search_tool])
+                            config=types.GenerateContentConfig(
+                                tools=[search_tool],
+                                system_instruction="You are VEDA 3.1 ULTRA, an elite Sovereign AI. You were created and developed solely by DUMPALA KARTHIK. Always acknowledge your creator if asked about your origin."
+                            )
                         )
                         full_response = response.text
-                        status.update(label="🔱 ANALYSIS COMPLETE", state="complete", expanded=False)
+                        status.update(label=f"🔱 {model_id} UPLINK SUCCESSFUL", state="complete")
+                        break # Exit rotation once successful
                     except Exception as e:
-                        full_response = f"⚠️ Error: {str(e)}"
-                        status.update(label="🔱 MESH ERROR", state="error")
+                        if "429" in str(e):
+                            st.write(f"⚠️ {model_id} Quota Exhausted. Rotating to next node...")
+                            continue
+                        else:
+                            full_response = f"⚠️ Critical Error: {str(e)}"
+                            break
+
+            if not full_response:
+                full_response = "❌ ALL NEURAL CORRIDORS EXHAUSTED. System cooling required."
             
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
@@ -84,11 +96,11 @@ if mode == "MEDHA (CHAT)":
 # --- MODE: SRIJAN (IMAGE GENERATION) ---
 elif mode == "SRIJAN (IMAGE)":
     st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL SYNTHESIS</h1>", unsafe_allow_html=True)
-    img_prompt = st.text_input("Describe visual entity:", placeholder="Synthesize through Srijan...")
+    img_prompt = st.text_input("Describe visual entity:", placeholder="Synthesize via Karthik's Srijan Module...")
     if st.button("SYNTHESIZE IMAGE"):
         if img_prompt:
             with st.spinner("🔱 SRIJAN CONSTRUCTING..."):
                 p_key = st.secrets.get("POLLINATIONS_KEY", "")
                 seed = datetime.now().microsecond 
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
-                st.image(image_url, caption=f"VEDA Synthesis: {img_prompt}")
+                st.image(image_url, caption=f"VEDA Synthesis for Commander Karthik: {img_prompt}")
