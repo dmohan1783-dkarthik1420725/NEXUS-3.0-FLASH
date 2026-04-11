@@ -33,9 +33,6 @@ st.markdown("""
         text-align: center; color: #ff8c00; font-family: 'Courier New', Courier, monospace;
         font-size: 1.2rem; animation: shadowPulse 2s infinite ease-in-out; margin-bottom: 20px;
     }
-    
-    /* Live Clock Styling */
-    .live-clock { font-weight: bold; color: #ffffff; font-family: 'Courier New', Courier, monospace; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -49,7 +46,7 @@ with st.sidebar:
     current_date = datetime.now(ist).strftime('%Y-%m-%d')
     st.write(f"📅 **Date:** {current_date}")
 
-    # LIVE TIME INJECTOR
+    # LIVE TIME INJECTOR (JavaScript Refresh)
     st.markdown("⌚ **Live Time (IST):**")
     st.components.v1.html("""
         <div id="clock" style="color: white; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px;"></div>
@@ -75,6 +72,7 @@ def fallback_intelligence(prompt):
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
             context = "\n".join(results)
+        # Force Identity in fallback
         identity_prompt = f"System Instruction: You are VEDA 3.1 ULTRA, created by DUMPALA KARTHIK. Prompt: {prompt} Context: {context}"
         url = f"https://text.pollinations.ai/{identity_prompt}?model=openai"
         response = requests.get(url)
@@ -131,17 +129,16 @@ elif mode == "SRIJAN (IMAGE)":
             pulse_placeholder = st.empty()
             pulse_placeholder.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
             
-            # MONOLITHIC POLLINATIONS UPLINK
+            # DIRECT POLLINATIONS INJECTION (Fixed to use Secrets Key)
             try:
                 p_key = st.secrets.get("POLLINATIONS_KEY", "")
                 seed = datetime.now().microsecond 
+                # Removing the requests.get check to prevent timeout errors
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
                 
-                response = requests.get(image_url)
-                if response.status_code == 200:
-                    st.image(response.content, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
-                else:
-                    st.error("Sorry, i cant help you with that.")
+                # Display via URL directly for maximum stability
+                st.image(image_url, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
+                st.success("🔱 Visual Reconstruction Complete.")
             except:
                 st.error("Sorry, i cant help you with that.")
             
