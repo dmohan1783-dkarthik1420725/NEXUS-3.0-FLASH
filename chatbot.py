@@ -5,9 +5,8 @@ from datetime import datetime
 import pytz
 import requests
 import random
-import io
 
-# --- VEDA 3.1 ULTRA: TELEMETRY-HARDENED CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: ZERO-ERROR CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -69,4 +68,63 @@ if mode == "MEDHA (CHAT)":
             pulse = st.empty()
             pulse.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
             try:
+                # Primary Uplink
                 client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+                res = client.models.generate_content(
+                    model='gemini-3.1-pro-preview', 
+                    contents=prompt, 
+                    config=types.GenerateContentConfig(system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK.")
+                )
+                st.markdown(res.text)
+            except Exception as e:
+                st.markdown("Sorry, i cant help you with that.")
+            pulse.empty()
+
+# --- MODE: SRIJAN (IMAGE) ---
+elif mode == "SRIJAN (IMAGE)":
+    st.markdown("<h1 class='centered-title'>SRIJAN: VISUAL FORGE</h1>", unsafe_allow_html=True)
+    img_prompt = st.text_input("Describe visual entity:")
+    if st.button("SYNTHESIZE ART"):
+        pulse = st.empty()
+        pulse.markdown("<div class='thinking-text'>🔱 RENDERING SRIJAN...</div>", unsafe_allow_html=True)
+        image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
+        st.image(image_url, caption="VEDA Srijan Output", use_container_width=True)
+        pulse.empty()
+
+# --- MODE: SANGEET (MUSIC) ---
+elif mode == "SANGEET (MUSIC)":
+    st.markdown("<h1 class='centered-title'>SANGEET: SONIC ARCHITECT</h1>", unsafe_allow_html=True)
+    audio_prompt = st.text_input("Describe musical structure:")
+    if st.button("GENERATE SANGEET"):
+        wip = st.empty()
+        wip.markdown("<div class='wip-text'>🔱 WORK IN PROGRESS. PLEASE WAIT FOR 1-2 MINS...</div>", unsafe_allow_html=True)
+        pulse = st.empty()
+        pulse.markdown("<div class='thinking-text'>🔱 COMPOSING SONIC MESH...</div>", unsafe_allow_html=True)
+        try:
+            audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&seed={random.randint(0,9999)}"
+            audio_data = requests.get(audio_url).content
+            st.audio(audio_data, format="audio/wav")
+            st.success("🔱 Sangeet Manifested.")
+        except:
+            st.error("Sorry, i cant help you with that.")
+        wip.empty()
+        pulse.empty()
+
+# --- MODE: DRISHYAM (VIDEO) ---
+elif mode == "DRISHYAM (VIDEO)":
+    st.markdown("<h1 class='centered-title'>DRISHYAM: TEMPORAL FLOW</h1>", unsafe_allow_html=True)
+    vid_prompt = st.text_input("Describe temporal motion:")
+    if st.button("GENERATE DRISHYAM"):
+        wip = st.empty()
+        wip.markdown("<div class='wip-text'>🔱 WORK IN PROGRESS. PLEASE WAIT FOR 1-2 MINS...</div>", unsafe_allow_html=True)
+        pulse = st.empty()
+        pulse.markdown("<div class='thinking-text'>🔱 INITIATING DRISHYAM FLOW...</div>", unsafe_allow_html=True)
+        try:
+            video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}"
+            video_data = requests.get(video_url).content
+            st.video(video_data)
+            st.success("🔱 Drishyam Flow Active.")
+        except:
+            st.error("Sorry, i cant help you with that.")
+        wip.empty()
+        pulse.empty()
