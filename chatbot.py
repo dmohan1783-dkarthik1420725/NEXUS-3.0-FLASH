@@ -5,19 +5,18 @@ from datetime import datetime
 import pytz
 import requests
 from duckduckgo_search import DDGS
-from io import BytesIO
 
-# --- VEDA 3.1 ULTRA: APEX VISUAL CONFIGURATION ---
+# --- VEDA 3.1 ULTRA: APEX SOVEREIGN CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
-# SOVEREIGN UI: Orange Thermal styling, Centering, and Shadow Pulse
+# SOVEREIGN UI: Total Purge, Orange Glow, and SHADOW PULSE Animation
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Style the Toggle (Burger Icon) in Sovereign Orange */
+    /* Style the Sidebar Toggle (Burger Icon) in Sovereign Orange */
     button[kind="header"] { color: #ff8c00 !important; }
 
     /* Centered Thermal Orange Title */
@@ -27,7 +26,7 @@ st.markdown("""
         font-weight: bold; letter-spacing: 2px;
     }
 
-    /* SHADOW-PULSE ANIMATION: Dark to Real */
+    /* SHADOW-PULSE ANIMATION */
     @keyframes shadowPulse {
         0% { opacity: 0.2; text-shadow: 0 0 5px #000; }
         50% { opacity: 1; text-shadow: 0 0 20px #ff8c00; }
@@ -58,7 +57,7 @@ with st.sidebar:
     st.markdown("---")
     st.info("ARCHITECT: DUMPALA KARTHIK")
 
-# 2. FAILOVER SEARCH & INTELLIGENCE
+# 2. FAILOVER SEARCH & NEURAL NODES
 def fallback_intelligence(prompt):
     """Silent Rotation: Tries DDG Search + Pollinations AI if Google fails"""
     try:
@@ -100,12 +99,12 @@ if mode == "MEDHA (CHAT)":
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=[search_tool],
-                        system_instruction="You are VEDA 3.1 ULTRA, created by DUMPALA KARTHIK."
+                        system_instruction="You are VEDA 3.1 ULTRA by DUMPALA KARTHIK."
                     )
                 )
                 full_response = response.text
             except:
-                # SILENT ROTATION: Fallback to Pollinations AI
+                # SILENT ROTATION: Fallback to Pollinations AI Text
                 full_response = fallback_intelligence(prompt)
 
             thinking_placeholder.empty()
@@ -124,39 +123,26 @@ elif mode == "SRIJAN (IMAGE)":
     
     if st.button("SYNTHESIZE"):
         if img_prompt:
-            # Command thinking animation
+            # Active shadow-pulse thinking state
             pulse_placeholder = st.empty()
             pulse_placeholder.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
             
-            image_bytes = None
-            seed = datetime.now().microsecond
-            
-            # 1. PRIMARY: Pollinations AI Mesh
+            # DEDICATED POLLINATIONS UPLINK (Nano Banana removed)
             try:
                 p_key = st.secrets.get("POLLINATIONS_KEY", "")
+                seed = datetime.now().microsecond 
                 image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?seed={seed}&width=1024&height=1024&nologo=true&key={p_key}"
+                
+                # Verify the asset is generated before attempting render
                 response = requests.get(image_url)
                 if response.status_code == 200:
-                    image_bytes = response.content
+                    st.image(response.content, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
+                    st.success("🔱 Visual Reconstruction Complete.")
+                else:
+                    st.error("Sorry, i cant help you with that. The Pollinations visual mesh is offline.")
+            
             except Exception as e:
-                pass # Silently proceed to failover
-
-            # 2. FAILOVER: Gemini 3.1 Pro Image Mesh (Nano Banana Pro)
-            if not image_bytes:
-                try:
-                    client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                    image_res = client.models.generate_content(
-                        model='gemini-3.1-pro-image-preview',
-                        contents=types.Content(parts=[types.Part.from_text(f"{img_prompt}, ultra high resolution, professional photography")])
-                    )
-                    image_bytes = image_res.generated_images[0].bytes
-                except Exception as e:
-                    pass # Silently proceed to failure state
-
-            pulse_placeholder.empty()
-
-            if image_bytes:
-                st.image(image_bytes, caption=f"VEDA Visual Output for Commander Karthik: {img_prompt}", use_container_width=True)
-                st.success("🔱 Visual Reconstruction Complete.")
-            else:
+                st.error(f"⚠️ Sovereign Link Terminated: {str(e)}")
                 st.error("Sorry, i cant help you with that.")
+            
+            pulse_placeholder.empty()
