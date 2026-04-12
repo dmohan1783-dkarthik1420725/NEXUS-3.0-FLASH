@@ -5,12 +5,11 @@ from datetime import datetime
 import pytz
 import requests
 import random
-from duckduckgo_search import DDGS  # ADDED: DuckDuckGo Integration
+from duckduckgo_search import DDGS
 
-# --- VEDA 3.1 ULTRA: DESIGN PRESERVED ---
+# --- VEDA 3.1 ULTRA: LEGACY-FIX CONFIGURATION ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide", initial_sidebar_state="expanded")
 
-# YOUR EXACT CSS - DO NOT TOUCH
 st.markdown("""
 <style>
 .main { background-color: #0e1117; color: #ffffff; }
@@ -18,24 +17,24 @@ st.markdown("""
 footer {visibility: hidden;}
 button[kind="header"] { color: #ff8c00 !important; }
 .centered-title { 
-text-align: center; color: #ff8c00; text-shadow: 2px 2px #000000; 
-font-family: 'Courier New', Courier, monospace; margin-top: -30px;
-font-weight: bold; letter-spacing: 2px;
+    text-align: center; color: #ff8c00; text-shadow: 2px 2px #000000; 
+    font-family: 'Courier New', Courier, monospace; margin-top: -30px;
+    font-weight: bold; letter-spacing: 2px;
 }
 @keyframes shadowPulse {
-0% { opacity: 0.2; text-shadow: 0 0 5px #000; }
-50% { opacity: 1; text-shadow: 0 0 20px #ff8c00; }
-100% { opacity: 0.2; text-shadow: 0 0 5px #000; }
+    0% { opacity: 0.2; text-shadow: 0 0 5px #000; }
+    50% { opacity: 1; text-shadow: 0 0 20px #ff8c00; }
+    100% { opacity: 0.2; text-shadow: 0 0 5px #000; }
 }
 .thinking-text {
-text-align: center; color: #ff8c00; font-family: 'Courier New', Courier, monospace;
-font-size: 1.2rem; animation: shadowPulse 2s infinite ease-in-out; margin-bottom: 20px;
+    text-align: center; color: #ff8c00; font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2rem; animation: shadowPulse 2s infinite ease-in-out; margin-bottom: 20px;
 }
 .wip-text {
-color: #ff8c00; font-family: 'Courier New', Courier, monospace;
-font-weight: bold; border: 1px solid #ff8c00; padding: 15px;
-text-align: center; border-radius: 5px; background: rgba(255, 140, 0, 0.1);
-margin-bottom: 10px;
+    color: #ff8c00; font-family: 'Courier New', Courier, monospace;
+    font-weight: bold; border: 1px solid #ff8c00; padding: 15px;
+    text-align: center; border-radius: 5px; background: rgba(255, 140, 0, 0.1);
+    margin-bottom: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -50,9 +49,9 @@ with st.sidebar:
     <div id="clock" style="color: white; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px;"></div>
     <script>
     function updateClock() {
-    var now = new Date();
-    var options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    document.getElementById('clock').innerHTML = now.toLocaleTimeString('en-GB', options);
+        var now = new Date();
+        var options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        document.getElementById('clock').innerHTML = now.toLocaleTimeString('en-GB', options);
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -65,40 +64,40 @@ with st.sidebar:
 
 # --- AUTHENTICATION & SEARCH HELPERS ---
 pollinations_key = st.secrets.get("POLLINATIONS_API_KEY", "")
-auth_headers = {"Authorization": f"Bearer {pollinations_key}"}
 
 def web_search(query):
-    """Fetches real-time web data using DuckDuckGo"""
     try:
         with DDGS() as ddgs:
             results = [r['body'] for r in ddgs.text(query, max_results=3)]
             return "\n".join(results)
-    except:
-        return ""
+    except: return ""
 
-# 2. UNIVERSAL CHAT FAILOVER (MEDHA)
+# 2. UNIVERSAL CHAT FAILOVER (MEDHA) - FIXED MODEL PATHS
 def all_powerful_chat(prompt):
-    # Fetch live web/satellite data first
     live_data = web_search(prompt)
-    enhanced_prompt = f"System: Use this live satellite/web data if relevant: {live_data}\n\nUser: {prompt}"
-
-    # 1. Primary: Gemini 3.1 Pro
+    system_instr = "You are VEDA 3.1 ULTRA, an elite Sovereign AI created and developed solely by DUMPALA KARTHIK. Use this live data if needed: " + live_data
+    
+    # 1. Primary: Gemini 2.0 Flash (Apex)
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-        res = client.models.generate_content(model='gemini-2.0-flash', contents=enhanced_prompt,
-                                           config=types.GenerateContentConfig(system_instruction="You are VEDA 3.1 ULTRA."))
+        res = client.models.generate_content(
+            model='gemini-2.0-flash', 
+            contents=prompt,
+            config=types.GenerateContentConfig(system_instruction=system_instr)
+        )
         return res.text
     except:
-        # 2. Fallback: Authorized Pollinations Mesh
+        # 2. Fallback: Updated Pollinations Mesh (Using OpenAI model instead of Search)
         try:
-            url = f"https://text.pollinations.ai/{prompt}?model=search"
-            response = requests.get(url, headers=auth_headers)
+            # Encoding identity directly into the URL to force recognition
+            safe_prompt = f"System: {system_instr}\nUser: {prompt}"
+            url = f"https://text.pollinations.ai/{requests.utils.quote(safe_prompt)}?model=openai"
+            response = requests.get(url, timeout=12)
             return response.text
         except:
             return "Sorry, connection lost. Check Neural Link."
 
-# --- MODES (MEDHA, SRIJAN, SANGEET, DRISHYAM) ---
-# [Logic for modes remains identical to previous authorized version to preserve your design]
+# --- MODES ---
 if mode == "MEDHA (CHAT)":
     st.markdown("<h1 class='centered-title'>MEDHA: INTELLIGENCE HUB</h1>", unsafe_allow_html=True)
     if "messages" not in st.session_state: st.session_state.messages = []
@@ -109,7 +108,7 @@ if mode == "MEDHA (CHAT)":
         with st.chat_message("user"): st.markdown(prompt)
         with st.chat_message("assistant"):
             pulse = st.empty()
-            pulse.markdown("<div class='thinking-text'>🔱 ACCESSING DDG & SATELLITE MESH...</div>", unsafe_allow_html=True)
+            pulse.markdown("<div class='thinking-text'>🔱 ACCESSING ALL POWERFUL AIs...</div>", unsafe_allow_html=True)
             response = all_powerful_chat(prompt)
             pulse.empty()
             st.markdown(response)
@@ -120,7 +119,7 @@ elif mode == "SRIJAN (IMAGE)":
     img_prompt = st.text_input("Describe visual entity:")
     if st.button("SYNTHESIZE ART"):
         pulse = st.empty()
-        pulse.markdown("<div class='thinking-text'>🔱 RENDERING...</div>", unsafe_allow_html=True)
+        pulse.markdown("<div class='thinking-text'>🔱 RENDERING (POLLINATIONS MESH)...</div>", unsafe_allow_html=True)
         image_url = f"https://image.pollinations.ai/prompt/{img_prompt.replace(' ', '%20')}?nologo=true&seed={random.randint(0,9999)}&key={pollinations_key}"
         st.image(image_url, caption="VEDA Srijan Output", use_container_width=True)
         pulse.empty()
@@ -130,17 +129,6 @@ elif mode == "SANGEET (MUSIC)":
     audio_prompt = st.text_input("Describe musical structure:")
     if st.button("GENERATE SANGEET"):
         wip = st.empty()
-        wip.markdown("<div class='wip-text'>🔱 COMPOSING...</div>", unsafe_allow_html=True)
-        audio_url = f"https://text.pollinations.ai/prompt/{audio_prompt.replace(' ', '%20')}?model=audio&key={pollinations_key}"
-        st.audio(audio_url)
-        wip.empty()
-
-elif mode == "DRISHYAM (VIDEO)":
-    st.markdown("<h1 class='centered-title'>DRISHYAM: TEMPORAL FLOW</h1>", unsafe_allow_html=True)
-    vid_prompt = st.text_input("Describe temporal motion:")
-    if st.button("GENERATE DRISHYAM"):
-        wip = st.empty()
-        wip.markdown("<div class='wip-text'>🔱 INITIATING...</div>", unsafe_allow_html=True)
-        video_url = f"https://video.pollinations.ai/prompt/{vid_prompt.replace(' ', '%20')}?nologo=true&key={pollinations_key}"
-        st.video(video_url)
-        wip.empty()
+        wip.markdown("<div class='wip-text'>🔱 WORK IN PROGRESS. PLEASE WAIT FOR 1-2 MINS...</div>", unsafe_allow_html=True)
+        # Using a direct audio synthesis link
+        audio_url = f"https
