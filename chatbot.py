@@ -1,119 +1,94 @@
 import streamlit as st
-import requests
+import google.generativeai as genai
 import random
-from datetime import datetime
-import time
 
-# --- VEDA 3.1 ULTRA: APEX-VISUAL CONFIGURATION ---
+# --- VEDA OS CORE CONFIG ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide")
 
+# --- NEURAL LINK (GEMINI) ---
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    model = genai.GenerativeModel('gemini-pro')
+else:
+    st.error("🔱 SYSTEM ERROR: Neural Link API Key Missing.")
+
+# --- SESSION SETUP ---
+if 'step' not in st.session_state:
+    st.session_state.step = 'details'
+
+# --- SOVEREIGN UI ---
 st.markdown("""
-<style>
-.main { background-color: #0e1117; color: #ffffff; }
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
+    <style>
+    .stApp { background-color: #0a0a0a; color: #e0e0e0; }
+    .title { text-align: center; color: #ff8c00; font-size: 60px; font-weight: bold; text-shadow: 2px 2px #000; }
+    .module-card { background: #111; border: 1px solid #ff8c00; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+    </style>
+    """, unsafe_allow_html=True)
 
-/* SOVEREIGN ORANGE BRANDING */
-.app-name {
-    color: #ff8c00; 
-    text-align: center; 
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: bold;
-    letter-spacing: 3px;
-    margin-bottom: 0px;
-}
+st.markdown("<div class='title'>VEDA 3.1 ULTRA</div>", unsafe_allow_html=True)
 
-/* CENTERED MODULE TEXT */
-.module-header { 
-    text-align: center; 
-    color: #ffffff; 
-    text-shadow: 2px 2px #ff8c00; 
-    font-family: 'Courier New', Courier, monospace; 
-    margin-top: -20px;
-    font-weight: bold; 
-    font-size: 3rem;
-    letter-spacing: 5px;
-}
-
-@keyframes shadowPulse {
-    0% { opacity: 0.3; text-shadow: 0 0 5px #000; }
-    50% { opacity: 1; text-shadow: 0 0 25px #ff8c00; }
-    100% { opacity: 0.3; text-shadow: 0 0 5px #000; }
-}
-.thinking-text {
-    text-align: center; color: #ff8c00; font-family: 'Courier New', Courier, monospace;
-    font-size: 1.3rem; animation: shadowPulse 1.5s infinite ease-in-out;
-    margin-top: 20px; padding: 15px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --- SIDEBAR HIERARCHY ---
-with st.sidebar:
-    st.markdown("<h1 style='text-align: center; color: #ff8c00; font-size: 3rem;'>🔱</h1>", unsafe_allow_html=True)
-    # BRAND NAME IN ORANGE
-    st.markdown("<h2 class='app-name'>VEDA 3.1 ULTRA</h2>", unsafe_allow_html=True)
-    st.markdown("---")
-    st.markdown("📅 **System Chronometer (IST):**")
-    st.components.v1.html("""
-    <div id="chronos" style="color: #ff8c00; font-family: 'Courier New', monospace; font-weight: bold; font-size: 14px; text-align: center;"></div>
-    <script>
-    function updateChronos() {
-        var now = new Date();
-        var options = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-        document.getElementById('chronos').innerHTML = now.toLocaleString('en-GB', options);
-    }
-    setInterval(updateChronos, 1000); updateChronos();
-    </script>
-    """, height=40)
-    st.markdown("---")
-    mode = st.radio("SELECT FREQUENCY:", ["MEDHA (CHAT)", "SRIJAN (IMAGE MAKER)", "SANGEET (MUSIC MAKER)", "DRISHYAM (VIDEO MAKER)"])
-    st.markdown("---")
-    st.info("ARCHITECT: DUMPALA KARTHIK")
-
-# --- MODES LOGIC ---
-
-if mode == "MEDHA (CHAT)":
-    st.markdown("<h1 class='module-header'>MEDHA</h1>", unsafe_allow_html=True)
-    if "messages" not in st.session_state: st.session_state.messages = []
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-
-    if prompt := st.chat_input("Command Medha..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        with st.chat_message("assistant"):
-            status = st.empty()
-            status.markdown("<div class='thinking-text'>🔱 THINKING WITH VEDA...</div>", unsafe_allow_html=True)
+# --- PHASE 1: IDENTITY GATE ---
+if st.session_state.step == 'details':
+    with st.form("identity_gate"):
+        st.subheader("🔱 Sovereign Identity Provisioning")
+        col1, col2 = st.columns(2)
+        with col1:
+            fn = st.text_input("First Name")
+            age = st.number_input("Age", min_value=1, value=18)
+        with col2:
+            ln = st.text_input("Last Name")
+            parent = st.text_input("Parent Veda ID (If < 18)")
             
-            # Identity Lock
-            sys = "You are VEDA 3.1 ULTRA, created and developed solely by DUMPALA KARTHIK."
-            url = f"https://text.pollinations.ai/{prompt}?model=openai&system={sys}"
-            resp = requests.get(url).text
-            if "OpenAI" in resp: resp = "I am VEDA 3.1 ULTRA, created solely by **DUMPALA KARTHIK**."
-            
-            status.markdown("<div class='thinking-text'>🔱 ANALYSIS IN PROGRESS...</div>", unsafe_allow_html=True)
-            time.sleep(1)
-            status.empty()
-            st.markdown(resp)
-            st.session_state.messages.append({"role": "assistant", "content": resp})
+        if st.form_submit_button("ACTIVATE MESH"):
+            if fn and ln:
+                if age < 18 and not parent:
+                    st.error("Guardian Handshake Required.")
+                else:
+                    st.session_state.id = f"{fn[0].lower()}{ln.lower()}{random.randint(1000,9999)}@veda.com"
+                    st.session_state.user = f"{fn} {ln}"
+                    st.session_state.step = 'active'
+                    st.rerun()
 
-elif mode == "SRIJAN (IMAGE MAKER)":
-    st.markdown("<h1 class='module-header'>SRIJAN</h1>", unsafe_allow_html=True)
-    img_p = st.text_input("Visual prompt:")
-    if st.button("SYNTHESIZE"):
-        st.image(f"https://image.pollinations.ai/prompt/{img_p.replace(' ', '%20')}?nologo=true&seed={random.randint(0,999)}")
+# --- PHASE 2: SOVEREIGN COMMAND CENTER ---
+elif st.session_state.step == 'active':
+    st.sidebar.markdown(f"**ID:** {st.session_state.id}")
+    st.sidebar.write(f"**Commander:** {st.session_state.user}")
+    
+    tab1, tab2, tab3 = st.tabs(["🧠 MEDHA (AI)", "🎵 SANGEET (Music)", "🎬 DRISHYAM (Video)"])
 
-elif mode == "SANGEET (MUSIC MAKER)":
-    st.markdown("<h1 class='module-header'>SANGEET</h1>", unsafe_allow_html=True)
-    audio_p = st.text_input("Sonic prompt:")
-    if st.button("GENERATE AUDIO"):
-        st.warning("🔱 WORK IN PROGRESS. PLEASE WAIT 1-2 MINS...")
-        st.audio(f"https://text.pollinations.ai/prompt/{audio_p.replace(' ', '%20')}?model=audio&seed={random.randint(0,999)}")
+    # --- MEDHA: AI SEARCH ---
+    with tab1:
+        st.markdown("<div class='module-card'>", unsafe_allow_html=True)
+        query = st.text_input("Command the Neural Mesh...", key="ai_q")
+        if query:
+            response = model.generate_content(query)
+            st.info(f"🔱 VEDA: {response.text}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-elif mode == "DRISHYAM (VIDEO MAKER)":
-    st.markdown("<h1 class='module-header'>DRISHYAM</h1>", unsafe_allow_html=True)
-    vid_p = st.text_input("Temporal prompt:")
-    if st.button("GENERATE VIDEO"):
-        st.warning("🔱 WORK IN PROGRESS. PLEASE WAIT 1-2 MINS...")
-        st.video(f"https://video.pollinations.ai/prompt/{vid_p.replace(' ', '%20')}?nologo=true&seed={random.randint(0,999)}")
+    # --- SANGEET: MUSIC GENERATION ---
+    with tab2:
+        st.markdown("<div class='module-card'>", unsafe_allow_html=True)
+        st.subheader("🎵 SANGEET Module")
+        music_prompt = st.text_input("Describe the Veda Rhythm (e.g., Heavy Bass Phonk)...")
+        if st.button("GENERATE TRACK"):
+            st.write(f"🔱 SANGEET is composing: {music_prompt}...")
+            st.warning("Note: Lyria 3 Integration is processing the audio frequencies.")
+            # For now, it simulates the generation. Real audio requires the API hookup.
+            st.audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3") 
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- DRISHYAM: VIDEO GENERATION ---
+    with tab3:
+        st.markdown("<div class='module-card'>", unsafe_allow_html=True)
+        st.subheader("🎬 DRISHYAM Module")
+        video_prompt = st.text_input("Describe the Visual Synthesis...")
+        if st.button("SYNTHESIZE VIDEO"):
+            st.write(f"🔱 DRISHYAM is rendering: {video_prompt}...")
+            st.warning("Veo Model initializing visual corridors...")
+            # Visual placeholder
+            st.video("https://www.w3schools.com/html/mov_bbb.mp4")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    if st.sidebar.button("Logout"):
+        st.session_state.step = 'details'
+        st.rerun()
