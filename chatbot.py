@@ -11,7 +11,7 @@ from streamlit_autorefresh import st_autorefresh
 # --- 1. SOVEREIGN UI & PULSE ENGINE ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide")
 
-# Heartbeat: Refresh every 1 second to keep the clock ticking live
+# Live Heartbeat: Refreshes every 1 second to keep the IST clock moving
 st_autorefresh(interval=1000, key="datetick")
 
 st.markdown("""
@@ -32,7 +32,7 @@ st.markdown("""
     }
     .sidebar-text { color: #ff8c00; font-family: 'Courier New', monospace; font-weight: bold; }
 
-    /* Centered Hub Layout */
+    /* Hub Layout */
     .main-hub { text-align: center; margin-top: 5vh; }
     .hub-title { color: #ff8c00; font-size: 26px; font-family: 'Courier New', monospace; margin-bottom: 0; }
     .welcome-msg { color: #ff8c00; font-size: 34px; font-weight: bold; margin-bottom: 30px; }
@@ -53,7 +53,7 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
     }
 
-    /* Search Bar */
+    /* Search Bar Design */
     .stChatInput {
         border: 1px solid #ff8c00 !important;
         border-radius: 25px !important;
@@ -68,7 +68,7 @@ if "mode" not in st.session_state: st.session_state.mode = "FAST"
 if "is_ultra_active" not in st.session_state: st.session_state.is_ultra_active = False
 if "show_payment" not in st.session_state: st.session_state.show_payment = False
 
-# --- 3. SIDEBAR: LIVE IST TEMPORAL NODE ---
+# --- 3. SIDEBAR: TEMPORAL NODE (LIVE IST) ---
 with st.sidebar:
     st.markdown("<h1 style='color:#ff8c00;'>🔱 VEDA 3.1</h1>", unsafe_allow_html=True)
     
@@ -96,6 +96,7 @@ with h_col1:
     st.markdown(f"<h3 style='color:#ff8c00;'>{st.session_state.app_mode.upper()}</h3>", unsafe_allow_html=True)
 
 with h_col2:
+    # 2026 Model Mesh Selection
     modes = ["FAST", "THINKING", "PRO", "ULTRA"]
     m_cols = st.columns(len(modes))
     for i, m in enumerate(modes):
@@ -113,7 +114,7 @@ if st.session_state.show_payment and not st.session_state.is_ultra_active:
     st.markdown("""
         <div style='background: rgba(255, 140, 0, 0.1); padding: 30px; border-radius: 20px; border: 2px solid #ff8c00; text-align:center;'>
             <h2 style='color:#ff8c00;'>🔱 ULTRA SECTOR: ACCESS RESTRICTED</h2>
-            <p style='color:white;'>Uplink to Gemini 1.5 Pro, Kling AI, and Sonic Architect.</p>
+            <p style='color:white;'>Uplink to Gemini 3.1 Pro, Kling AI, and Sonic Architect.</p>
             <h1 style='color:#ff8c00;'>₹500 / 60 DAYS</h1>
         </div>
     """, unsafe_allow_html=True)
@@ -126,7 +127,7 @@ if st.session_state.show_payment and not st.session_state.is_ultra_active:
     with col_b:
         passcode = st.text_input("ENTER TRANSACTION ID / SOVEREIGN KEY:", type="password")
         if st.button("VERIFY UPLINK", use_container_width=True):
-            # Only opens if a valid key is provided (e.g. VEDA_PRO_2026)
+            # THE SOVEREIGN KEY
             if passcode == "VEDA_PRO_2026":
                 st.session_state.is_ultra_active = True
                 st.session_state.mode = "ULTRA"
@@ -137,9 +138,10 @@ if st.session_state.show_payment and not st.session_state.is_ultra_active:
                 st.error("❌ INVALID TRANSACTION DATA.")
     st.stop()
 
-# --- 6. NEURAL ROUTER ---
+# --- 6. NEURAL ROUTER (2026 MODELS) ---
 def veda_brain_router(prompt):
-    model_id = "gemini-1.5-flash" if st.session_state.mode == "FAST" else "gemini-1.5-pro"
+    # Migration to Gemini 3.1 Series for 2026
+    model_id = "gemini-3-flash" if st.session_state.mode == "FAST" else "gemini-3.1-pro"
     try:
         client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
         web_context = ""
