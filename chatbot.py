@@ -5,9 +5,14 @@ from duckduckgo_search import DDGS
 from datetime import datetime
 import time
 import random
+import pytz
+from streamlit_autorefresh import st_autorefresh
 
-# --- 1. SOVEREIGN UI ENGINE (ORANGE GEOMETRIC GRID) ---
+# --- 1. SOVEREIGN UI & PULSE ENGINE ---
 st.set_page_config(page_title="VEDA 3.1 ULTRA", page_icon="🔱", layout="wide")
+
+# Heartbeat: Refresh every 1 second to keep the clock ticking live
+st_autorefresh(interval=1000, key="datetick")
 
 st.markdown("""
 <style>
@@ -25,14 +30,14 @@ st.markdown("""
         background-color: #0d1117;
         border-right: 1px solid #ff8c00;
     }
-    .sidebar-text { color: #ff8c00; font-family: 'Courier New', monospace; font-size: 15px; font-weight: bold; }
+    .sidebar-text { color: #ff8c00; font-family: 'Courier New', monospace; font-weight: bold; }
 
     /* Centered Hub Layout */
     .main-hub { text-align: center; margin-top: 5vh; }
     .hub-title { color: #ff8c00; font-size: 26px; font-family: 'Courier New', monospace; margin-bottom: 0; }
     .welcome-msg { color: #ff8c00; font-size: 34px; font-weight: bold; margin-bottom: 30px; }
 
-    /* Action Pills Styles */
+    /* Button Styles */
     div.stButton > button {
         background: rgba(30, 30, 30, 0.7) !important;
         color: #ddd !important;
@@ -48,7 +53,7 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
     }
 
-    /* Search Bar Design */
+    /* Search Bar */
     .stChatInput {
         border: 1px solid #ff8c00 !important;
         border-radius: 25px !important;
@@ -63,17 +68,21 @@ if "mode" not in st.session_state: st.session_state.mode = "FAST"
 if "is_ultra_active" not in st.session_state: st.session_state.is_ultra_active = False
 if "show_payment" not in st.session_state: st.session_state.show_payment = False
 
-# --- 3. SIDEBAR: TEMPORAL SYNC & MODES ---
+# --- 3. SIDEBAR: LIVE IST TEMPORAL NODE ---
 with st.sidebar:
     st.markdown("<h1 style='color:#ff8c00;'>🔱 VEDA 3.1</h1>", unsafe_allow_html=True)
     
-    # LIVE CLOCK & DATE
-    now = datetime.now()
-    st.markdown(f"<p class='sidebar-text'>📅 DATE: {now.strftime('%d %B %Y')}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p class='sidebar-text'>🕒 LIVE: {now.strftime('%H:%M:%S')} IST</p>", unsafe_allow_html=True)
-    st.markdown("---")
+    # Live IST Clock Sync
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    st.markdown(f"""
+        <div style='border: 1px solid #ff8c00; padding: 10px; border-radius: 10px; background: rgba(255, 140, 0, 0.1);'>
+            <p style='color:#ff8c00; font-family:monospace; margin:0;'>📅 {now.strftime('%d %B %Y')}</p>
+            <p style='color:#ff8c00; font-family:monospace; font-size: 18px; font-weight: bold; margin:0;'>🕒 {now.strftime('%H:%M:%S')} IST</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    # Neural Sectors
+    st.markdown("---")
     st.session_state.app_mode = st.radio(
         "NEURAL SECTORS", 
         ["Medha (Chat)", "Srijan (Image)", "Sangeet (Music)", "Drishyam (Video)"]
@@ -81,7 +90,7 @@ with st.sidebar:
     st.markdown("---")
     st.caption("Sovereign Infrastructure v3.1 ULTRA")
 
-# --- 4. TOP BAR: GEAR SELECTOR ---
+# --- 4. TOP BAR: MODE SELECTOR ---
 h_col1, h_col2 = st.columns([1, 1])
 with h_col1:
     st.markdown(f"<h3 style='color:#ff8c00;'>{st.session_state.app_mode.upper()}</h3>", unsafe_allow_html=True)
@@ -109,7 +118,6 @@ if st.session_state.show_payment and not st.session_state.is_ultra_active:
         </div>
     """, unsafe_allow_html=True)
     
-    # UPI Link: +91 93254 81849
     upi_url = "upi://pay?pa=9325481849@ybl&pn=SovereignVEDA&am=500&cu=INR"
     
     col_a, col_b = st.columns(2)
@@ -118,7 +126,8 @@ if st.session_state.show_payment and not st.session_state.is_ultra_active:
     with col_b:
         passcode = st.text_input("ENTER TRANSACTION ID / SOVEREIGN KEY:", type="password")
         if st.button("VERIFY UPLINK", use_container_width=True):
-            if len(passcode) > 6: # Replace with your logic or specific key
+            # Only opens if a valid key is provided (e.g. VEDA_PRO_2026)
+            if passcode == "VEDA_PRO_2026":
                 st.session_state.is_ultra_active = True
                 st.session_state.mode = "ULTRA"
                 st.session_state.show_payment = False
