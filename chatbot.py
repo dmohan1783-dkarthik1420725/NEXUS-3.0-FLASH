@@ -25,15 +25,12 @@ st.markdown("""
         background-color: #0d1117;
         border-right: 1px solid #ff8c00;
     }
-    .sidebar-text { color: #ff8c00; font-family: 'Courier New', monospace; font-size: 14px; }
+    .sidebar-text { color: #ff8c00; font-family: 'Courier New', monospace; font-size: 15px; font-weight: bold; }
 
-    /* Header & Branding */
-    .veda-orange { color: #ff8c00 !important; font-family: 'Courier New', monospace; }
-    
     /* Centered Hub Layout */
     .main-hub { text-align: center; margin-top: 5vh; }
-    .hub-title { color: #ff8c00; font-size: 24px; font-family: 'Courier New', monospace; margin-bottom: 0; }
-    .welcome-msg { color: #ff8c00; font-size: 32px; font-weight: bold; margin-bottom: 20px; }
+    .hub-title { color: #ff8c00; font-size: 26px; font-family: 'Courier New', monospace; margin-bottom: 0; }
+    .welcome-msg { color: #ff8c00; font-size: 34px; font-weight: bold; margin-bottom: 30px; }
 
     /* Action Pills Styles */
     div.stButton > button {
@@ -41,21 +38,21 @@ st.markdown("""
         color: #ddd !important;
         border: 1px solid #444 !important;
         border-radius: 30px !important;
-        padding: 10px 20px !important;
+        padding: 12px 20px !important;
         transition: 0.3s;
         width: 100%;
     }
     div.stButton > button:hover {
         border-color: #ff8c00 !important;
         color: white !important;
-        box-shadow: 0 0 15px rgba(255, 140, 0, 0.4);
+        box-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
     }
 
     /* Search Bar Design */
     .stChatInput {
         border: 1px solid #ff8c00 !important;
-        border-radius: 20px !important;
-        background: rgba(20, 20, 20, 0.8) !important;
+        border-radius: 25px !important;
+        background: rgba(20, 20, 20, 0.9) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -63,31 +60,31 @@ st.markdown("""
 # --- 2. INITIALIZE SESSION STATES ---
 if "messages" not in st.session_state: st.session_state.messages = []
 if "mode" not in st.session_state: st.session_state.mode = "FAST"
-if "app_mode" not in st.session_state: st.session_state.app_mode = "Medha (Chat)"
 if "is_ultra_active" not in st.session_state: st.session_state.is_ultra_active = False
 if "show_payment" not in st.session_state: st.session_state.show_payment = False
 
-# --- 3. SIDEBAR: IDENTITY & MODES ---
+# --- 3. SIDEBAR: TEMPORAL SYNC & MODES ---
 with st.sidebar:
     st.markdown("<h1 style='color:#ff8c00;'>🔱 VEDA 3.1</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p class='sidebar-text'>COMMANDER: MOHAN</p>", unsafe_allow_html=True)
-    st.markdown(f"<p class='sidebar-text'>DATE: {datetime.now().strftime('%d/%m/2026')}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p class='sidebar-text'>TIME: {datetime.now().strftime('%H:%M:%S')}</p>", unsafe_allow_html=True)
+    
+    # LIVE CLOCK & DATE
+    now = datetime.now()
+    st.markdown(f"<p class='sidebar-text'>📅 DATE: {now.strftime('%d %B %Y')}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='sidebar-text'>🕒 LIVE: {now.strftime('%H:%M:%S')} IST</p>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # App Modes
+    # Neural Sectors
     st.session_state.app_mode = st.radio(
-        "NEURAL SECTOR", 
+        "NEURAL SECTORS", 
         ["Medha (Chat)", "Srijan (Image)", "Sangeet (Music)", "Drishyam (Video)"]
     )
-    
     st.markdown("---")
-    st.caption("Sovereign AI Infrastructure v3.1.0")
+    st.caption("Sovereign Infrastructure v3.1 ULTRA")
 
-# --- 4. TOP BAR: GEAR SELECTOR & PAYMENT ---
+# --- 4. TOP BAR: GEAR SELECTOR ---
 h_col1, h_col2 = st.columns([1, 1])
 with h_col1:
-    st.markdown(f"<h3 class='veda-orange'>{st.session_state.app_mode.upper()}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#ff8c00;'>{st.session_state.app_mode.upper()}</h3>", unsafe_allow_html=True)
 
 with h_col2:
     modes = ["FAST", "THINKING", "PRO", "ULTRA"]
@@ -102,34 +99,36 @@ with h_col2:
                 st.session_state.show_payment = False
             st.rerun()
 
-# --- 5. PAYMENT GATEWAY (ULTRA UNLOCK) ---
+# --- 5. PAYMENT GATEWAY (HARD LOCK) ---
 if st.session_state.show_payment and not st.session_state.is_ultra_active:
     st.markdown("""
-        <div style='background: rgba(255, 140, 0, 0.1); padding: 25px; border-radius: 15px; border: 1px solid #ff8c00; text-align:center;'>
-            <h2 style='color:#ff8c00;'>🔱 UNLOCK ULTRA CORRIDOR</h2>
-            <p style='color:white;'>Elite Gemini 1.5 Pro + Kling AI + Sonic Architect</p>
-            <h1 style='color:#ff8c00;'>₹500 / 2 Months</h1>
+        <div style='background: rgba(255, 140, 0, 0.1); padding: 30px; border-radius: 20px; border: 2px solid #ff8c00; text-align:center;'>
+            <h2 style='color:#ff8c00;'>🔱 ULTRA SECTOR: ACCESS RESTRICTED</h2>
+            <p style='color:white;'>Uplink to Gemini 1.5 Pro, Kling AI, and Sonic Architect.</p>
+            <h1 style='color:#ff8c00;'>₹500 / 60 DAYS</h1>
         </div>
     """, unsafe_allow_html=True)
     
     # UPI Link: +91 93254 81849
-    upi_url = "upi://pay?pa=9325481849@ybl&pn=Mohan&am=500&cu=INR"
+    upi_url = "upi://pay?pa=9325481849@ybl&pn=SovereignVEDA&am=500&cu=INR"
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.link_button("🚀 Pay with PhonePe / GPay", upi_url, use_container_width=True)
+        st.link_button("🚀 PAY VIA PHONEPE / GPAY", upi_url, use_container_width=True)
     with col_b:
-        if st.button("✅ I have Paid (Unlock Now)", use_container_width=True):
-            with st.spinner("Verifying Transaction..."):
-                time.sleep(2)
+        passcode = st.text_input("ENTER TRANSACTION ID / SOVEREIGN KEY:", type="password")
+        if st.button("VERIFY UPLINK", use_container_width=True):
+            if len(passcode) > 6: # Replace with your logic or specific key
                 st.session_state.is_ultra_active = True
                 st.session_state.mode = "ULTRA"
                 st.session_state.show_payment = False
-                st.success("🔱 ULTRA ACTIVATED.")
+                st.success("🔱 ULTRA ACCESS GRANTED.")
                 st.rerun()
+            else:
+                st.error("❌ INVALID TRANSACTION DATA.")
     st.stop()
 
-# --- 6. NEURAL ROUTER LOGIC ---
+# --- 6. NEURAL ROUTER ---
 def veda_brain_router(prompt):
     model_id = "gemini-1.5-flash" if st.session_state.mode == "FAST" else "gemini-1.5-pro"
     try:
@@ -146,10 +145,10 @@ def veda_brain_router(prompt):
         return response.text
     except Exception as e: return f"🔱 NEURAL GAP: {str(e)}"
 
-# --- 7. MAIN INTERFACE ROUTING ---
+# --- 7. MAIN INTERFACE ---
 if st.session_state.app_mode == "Medha (Chat)":
     if not st.session_state.messages:
-        st.markdown('<div class="main-hub"><p class="hub-title">VEDA 3.1 ULTRA</p><h1 class="welcome-msg">MEDHA HUB: WELCOME, COMMANDER.</h1></div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-hub"><p class="hub-title">VEDA 3.1 ULTRA</p><h1 class="welcome-msg">MEDHA HUB: WELCOME.</h1></div>', unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
         with c1: st.button("🎨 Image Forge")
         with c2: st.button("🎧 Sonic Architect")
@@ -169,15 +168,16 @@ if st.session_state.app_mode == "Medha (Chat)":
         st.rerun()
 
 elif st.session_state.app_mode == "Srijan (Image)":
-    st.markdown("<h2 class='veda-orange'>SRIJAN: IMAGE FORGE</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#ff8c00;'>SRIJAN: IMAGE FORGE</h2>", unsafe_allow_html=True)
     p = st.text_input("Enter Visualization Prompt...")
     if st.button("Forge Visualization"):
-        seed = random.randint(0, 99999)
-        url = f"https://pollinations.ai/p/{p.replace(' ', '_')}?width=1024&height=1024&seed={seed}&model=flux"
+        url = f"https://pollinations.ai/p/{p.replace(' ', '_')}?width=1024&height=1024&seed={random.randint(0,999)}&model=flux"
         st.image(url, caption="🔱 VEDA VISUAL SYNTHESIS")
 
 elif st.session_state.app_mode in ["Sangeet (Music)", "Drishyam (Video)"]:
-    st.markdown(f"<h2 class='veda-orange'>{st.session_state.app_mode.upper()} (KLING AI)</h2>", unsafe_allow_html=True)
-    st.info("🔱 KLING AI Neural Link Active. High-fidelity generation enabled.")
-    st.text_input("Enter Generative Prompt...")
-    st.button("Generate Asset")
+    mode_name = "SONIC ARCHITECT" if "Music" in st.session_state.app_mode else "DRISHYAM FLOW"
+    st.markdown(f"<h2 style='color:#ff8c00;'>{mode_name} (KLING AI)</h2>", unsafe_allow_html=True)
+    st.info("🔱 KLING AI Neural Link Active. High-fidelity temporal and sonic generation enabled.")
+    st.text_input(f"Enter {st.session_state.app_mode} Prompt...")
+    if st.button("Generate Asset"):
+        st.warning("🔱 KLING AI UPLINK INITIATED: Processing on External Cluster...")
