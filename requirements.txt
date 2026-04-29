@@ -1,0 +1,6 @@
+streamlit
+google-genai
+duckduckgo-search
+pytz
+streamlit-autorefresh
+requests
