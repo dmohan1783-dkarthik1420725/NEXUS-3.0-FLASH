@@ -4,3 +4,8 @@ duckduckgo-search
 pytz
 streamlit-autorefresh
 requests
+streamlit
+openai
+pytz
+streamlit-autorefresh
+requests
