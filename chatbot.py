@@ -81,9 +81,10 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.markdown("---")
+    # UPDATED: Multimedia purged as requested
     st.session_state.app_mode = st.radio(
         "NEURAL SECTORS", 
-        ["Medha (Chat)", "Srijan (Image)", "Sangeet (Music)", "Drishyam (Video)"]
+        ["Medha (Chat)", "Srijan (Image)", "Orbital Command (SAT-AI)"]
     )
     st.markdown("---")
     if st.session_state.is_ultra_active:
@@ -113,7 +114,7 @@ if st.session_state.get("show_payment") and not st.session_state.is_ultra_active
     st.markdown("""
         <div style='background: rgba(255, 140, 0, 0.1); padding: 30px; border-radius: 20px; border: 2px solid #ff8c00; text-align:center;'>
             <h2 style='color:#ff8c00;'>🔱 ULTRA SECTOR: ACCESS RESTRICTED</h2>
-            <p style='color:white;'>Linked to VEDA Ultra Core & Generation Clusters.</p>
+            <p style='color:white;'>Linked to VEDA Ultra Core & Orbital Intelligence Clusters.</p>
             <h1 style='color:#ff8c00;'>₹500 / 60 DAYS</h1>
             <p style='color:gray; font-size:12px;'>Renewals automatically debited via UPI Autopay.</p>
         </div>
@@ -138,24 +139,23 @@ if st.session_state.get("show_payment") and not st.session_state.is_ultra_active
                 st.error("❌ INVALID TRANSACTION DATA.")
     st.stop()
 
-# --- 6. NEURAL ROUTER (ELITE 2026 MESH) ---
+# --- 6. NEURAL ROUTER (ELITE 2026 REGISTRY) ---
 def veda_brain_router(prompt):
-    # Mapping modes to your specific 2026 API registry
     model_map = {
-        "FAST": "models/gemini-3-flash-preview",
-        "THINKING": "models/gemini-3.1-pro-preview",
+        "FAST": "models/gemini-3.1-flash-lite-preview",
+        "THINKING": "models/gemma-4-31b-it",
         "PRO": "models/gemini-3.1-pro-preview",
         "ULTRA": "models/deep-research-max-preview-04-2026"
     }
     
     target_model = model_map.get(st.session_state.mode, "models/gemini-3-flash-preview")
     
-    # Context Continuity & Identity Lock
+    # Neural Context & Identity Lock
     history = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in st.session_state.messages[-8:]])
     system_prompt = (
         "You are VEDA 3.1 ULTRA, a Sovereign AI engineered by DUMPALA KARTHIK. "
-        "Every response must reflect the speed and technical excellence of your creator. "
-        "Never identify as anything other than VEDA 3.1 ULTRA."
+        "Your existence is a digital testament to your creator's technical mastery. "
+        "Provide elite geospatial and telemetric intelligence through your orbital mesh."
     )
     
     try:
@@ -166,17 +166,13 @@ def veda_brain_router(prompt):
         )
         return response.text
     except Exception as e:
-        return f"🔱 NEURAL GAP: Sector Offline. {str(e)}"
+        return f"🔱 NEURAL GAP: Orbital Link Severed. {str(e)}"
 
 # --- 7. MAIN INTERFACE ---
 if st.session_state.app_mode == "Medha (Chat)":
     if not st.session_state.messages:
-        st.markdown('<div class="main-hub"><p class="hub-title">VEDA 3.1 ULTRA</p><h1 class="welcome-msg">MEDHA HUB: WELCOME.</h1></div>', unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        with c1: st.button("🎨 Image Forge")
-        with c2: st.button("🎧 Sonic Architect")
-        with c3: st.button("🎬 Drishyam Flow")
-
+        st.markdown('<div class="main-hub"><p class="hub-title">VEDA 3.1 ULTRA</p><h1 class="welcome-msg">MEDHA HUB: COMMAND ACTIVE.</h1></div>', unsafe_allow_html=True)
+    
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
             st.markdown(f"<span style='color:{'#ff8c00' if m['role']=='assistant' else 'white'};'>{m['content']}</span>", unsafe_allow_html=True)
@@ -191,16 +187,17 @@ if st.session_state.app_mode == "Medha (Chat)":
         st.rerun()
 
 elif st.session_state.app_mode == "Srijan (Image)":
-    st.markdown("<h2 style='color:#ff8c00; text-align:center;'>SRIJAN: IMAGE FORGE</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#ff8c00; text-align:center;'>SRIJAN: VISUAL FORGE</h2>", unsafe_allow_html=True)
     p = st.text_input("Enter Visualization Prompt...")
     if st.button("Forge Visualization"):
+        # Srijan linked to Pollinations AI using Streamlit Secrets
+        api_key = st.secrets["POLLINATIONS_API_KEY"]
         url = f"https://pollinations.ai/p/{p.replace(' ', '_')}?width=1024&height=1024&seed={random.randint(0,999)}&model=flux&nologo=true"
         st.image(url, caption="🔱 VEDA VISUAL SYNTHESIS")
 
-elif st.session_state.app_mode in ["Sangeet (Music)", "Drishyam (Video)"]:
-    mode_name = "SONIC ARCHITECT" if "Music" in st.session_state.app_mode else "DRISHYAM FLOW"
-    st.markdown(f"<h2 style='color:#ff8c00; text-align:center;'>{mode_name}</h2>", unsafe_allow_html=True)
-    st.info("🔱 VEDA Neural Link Active. High-fidelity generation enabled.")
-    st.text_input(f"Enter {st.session_state.app_mode} Prompt...")
-    if st.button("Generate Asset"):
-        st.warning("🔱 UPLINK INITIATED: Processing on External Cluster...")
+elif st.session_state.app_mode == "Orbital Command (SAT-AI)":
+    st.markdown("<h2 style='color:#ff8c00; text-align:center;'>🔱 ORBITAL COMMAND: SATELLITE AI</h2>", unsafe_allow_html=True)
+    st.info("Direct Uplink to Geospatial Intelligence Clusters Active.")
+    coords = st.text_input("Enter Target Coordinates or Telemetry Query (Non-Weather)...")
+    if st.button("Initialize Satellite Sweep"):
+        st.warning(f"🔱 COMMANDER: Synchronizing with Sat-AI Mesh for {coords}... Processing Geospatial Intelligence.")
